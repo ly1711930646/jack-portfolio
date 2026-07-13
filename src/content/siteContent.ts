@@ -121,7 +121,7 @@ export interface SiteContent {
 
 export const defaultContent: SiteContent = {
   hero: {
-    logo: 'Jack',
+    logo: '李杨',
     navLinks: [
       { label: '首页', href: '#hero' },
       { label: '关于', href: '#about' },
@@ -130,7 +130,7 @@ export const defaultContent: SiteContent = {
       { label: '后台管理', href: '/admin' },
     ],
     ctaText: '查看资料',
-    title: "Hi, i'm jack",
+    title: "Hi, i'm 李杨",
     subtitle: 'a 3d creator driven by crafting striking and unforgettable projects',
     portraitImage:
       'https://shrug-person-78902957.figma.site/_components/v2/d24c01ad3a56fc65e942a1f501eb73db42d7cf9a/Rectangle_40443.81459862.png',
