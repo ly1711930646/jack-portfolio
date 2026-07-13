@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { defaultContent, type SiteContent, type TabId } from '../content/siteContent'
-import { isCOSReady, putContentJson } from '../lib/cosClient'
-import { contentJsonUrl } from '../cos-config'
+import { isGitHubReady, putContentJson } from '../lib/githubClient'
+import { contentJsonUrl } from '../github-config'
 
 const STORAGE_KEY = 'jack-portfolio-content'
 
@@ -76,10 +76,10 @@ const persistLocal = (content: SiteContent) => {
   }
 }
 
-// 持久化：配置 COS 时写回云端（实时同步全网）；否则回退到 /api/content（dev 用），同时写本地缓存
+// 持久化：配置 GitHub 时写回仓库（保存即同步全网）；否则回退到 /api/content（dev 用），同时写本地缓存
 const persistServer = (content: SiteContent) => {
   persistLocal(content)
-  if (isCOSReady()) {
+  if (isGitHubReady()) {
     putContentJson(content).catch(() => {
       /* 云端写入失败不影响本地缓存 */
     })
@@ -96,10 +96,13 @@ const persistServer = (content: SiteContent) => {
 
 // 加载优先级：云端 COS > dev 服务端文件 > 静态烘焙文件（Pages 等纯静态托管）> 本地缓存 > 默认值
 const loadInitial = async (): Promise<SiteContent> => {
-  // 最高优先级：云端 COS 上的 content.json（配置后所有访客实时同步，无需重新打包部署）
+  // 最高优先级：GitHub 仓库上的 content.json（配置后保存即同步，无需重新打包）
   if (contentJsonUrl) {
     try {
-      const res = await fetch(contentJsonUrl, { cache: 'no-cache' })
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 4000)
+      const res = await fetch(contentJsonUrl, { cache: 'no-cache', signal: ctrl.signal })
+      clearTimeout(timer)
       if (res.ok) {
         const raw = await res.json()
         if (raw && typeof raw === 'object' && (raw.hero || raw.about || raw.projects || raw.services || raw.marquee)) {
@@ -107,7 +110,7 @@ const loadInitial = async (): Promise<SiteContent> => {
         }
       }
     } catch {
-      /* COS 不可用时走兜底 */
+      /* GitHub 不可用时（如国内被墙）走兜底 */
     }
   }
   try {
