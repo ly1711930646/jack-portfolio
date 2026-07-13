@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  background: #0C0C0C;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Kanit', sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin:0;
+  padding:0;
+}
+
+.hero-heading {
+  background: linear-gradient(180deg, #646973 0%, #BBCCD7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+/* ── Navbar glass (iOS 27 liquid glass capsule) ── */
+/* 放在 @layer components 里，让 Tailwind 工具类可以正确覆盖 */
+@layer components {
+  .nav-glass {
+    background: rgba(15, 15, 20, 0.4);
+    backdrop-filter: blur(48px) saturate(1.2);
+    -webkit-backdrop-filter: blur(48px) saturate(1.2);
+    border: none;
+    box-shadow:
+      /* 极薄顶部内高光 */
+      inset 0 0.5px 0 rgba(255, 255, 255, 0.12);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* 液态玻璃内部光晕层 */
+  .nav-glass::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 90% 60%, rgba(91, 156, 255, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Animated conic gradient border for navbar */
+  .nav-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.2px;
+    background: conic-gradient(
+      from var(--border-angle-nav, 0deg),
+      rgba(255, 255, 255, 0) 0%,
+      rgba(180, 200, 255, 0.2) 18%,
+      rgba(91, 156, 255, 0.35) 36%,
+      rgba(140, 170, 255, 0.25) 54%,
+      rgba(255, 255, 255, 0) 72%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    animation: nav-border-spin 5s linear infinite;
+    z-index: 2;
+  }
+}
+
+@keyframes nav-border-spin {
+  from { --border-angle-nav: 0deg; }
+  to   { --border-angle-nav: 360deg; }
+}
+
+@keyframes bounce-down {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50%      { transform: translateY(14px); opacity: 0.4; }
+}
+
+.animate-bounce-down {
+  animation: bounce-down 1.8s ease-in-out infinite;
+}
+
+/* ── Mobile menu glass ── */
+@layer components {
+  .mobile-menu-glass {
+    background: rgba(10, 10, 10, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ── Button animated gradients ── */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-120%) skewX(-20deg); }
+  100% { transform: translateX(220%) skewX(-20deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 16px rgba(181, 1, 167, 0.35), 4px 4px 12px #7721B1 inset; }
+  50% { box-shadow: 0 0 28px rgba(181, 1, 167, 0.55), 4px 4px 12px #7721B1 inset; }
+}
+
+@keyframes diffuse-1 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  25% { transform: translate(7%, -5%) rotate(9deg) scale(1.08); }
+  50% { transform: translate(-3%, 6%) rotate(-5deg) scale(1.05); }
+  75% { transform: translate(5%, 4%) rotate(4deg) scale(1.09); }
+}
+
+@keyframes diffuse-2 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  25% { transform: translate(-5%, 7%) rotate(-10deg) scale(1.1); }
+  50% { transform: translate(6%, -4%) rotate(8deg) scale(1.06); }
+  75% { transform: translate(-4%, -5%) rotate(-3deg) scale(1.08); }
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 12s ease-in-out infinite;
+}
+
+.animate-shimmer-sweep {
+  animation: shimmer-sweep 1.2s ease-in-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+
+.animate-diffuse-1 {
+  animation: diffuse-1 14s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-diffuse-2 {
+  animation: diffuse-2 18s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ── Hero diffuse aurora background ── */
+@keyframes aurora-1 {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+  33% { transform: translate(-48%, -52%) rotate(8deg) scale(1.08); }
+  66% { transform: translate(-52%, -48%) rotate(-4deg) scale(1.05); }
+}
+
+@keyframes aurora-2 {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+  33% { transform: translate(-53%, -47%) rotate(-6deg) scale(1.1); }
+  66% { transform: translate(-47%, -53%) rotate(5deg) scale(1.06); }
+}
+
+@keyframes aurora-3 {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+  33% { transform: translate(-46%, -54%) rotate(10deg) scale(1.12); }
+  66% { transform: translate(-54%, -46%) rotate(-8deg) scale(1.08); }
+}
+
+.animate-aurora-1 {
+  animation: aurora-1 22s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-aurora-2 {
+  animation: aurora-2 26s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-aurora-3 {
+  animation: aurora-3 30s ease-in-out infinite;
+  will-change: transform;
+}
+
