@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useContent, mergeWithDefault } from '../context/ContentContext'
 import { logout } from './LoginPage'
+import { isCOSReady, uploadFile } from '../lib/cosClient'
 import type {
   HeroContent,
   MarqueeContent,
@@ -59,6 +60,45 @@ const ImagePreview = ({ src, alt }: { src: string; alt?: string }) => (
     <img src={src} alt={alt || ''} className="w-full h-auto object-cover" />
   </div>
 )
+
+// 通用「上传到云」按钮：浏览器直传 COS，成功后把公网 URL 回写到对应字段
+const COSImageUploader = ({ onPicked, label = '上传到云' }: { value: string; onPicked: (url: string) => void; label?: string }) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  if (!isCOSReady()) {
+    return <span className="text-xs text-white/30">（未配置云存储，上传不可用）</span>
+  }
+  const handle = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setErr('请选择图片文件')
+      return
+    }
+    setBusy(true)
+    setErr('')
+    try {
+      const url = await uploadFile(file)
+      onPicked(url)
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '上传失败')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <button type="button" onClick={() => inputRef.current?.click()} disabled={busy}
+        className="text-xs text-[#4A90FF] hover:text-[#5C9CFF] font-medium disabled:opacity-50">
+        {busy ? '上传中…' : label}
+      </button>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handle} />
+      {err && <span className="text-xs text-red-400">{err}</span>}
+    </div>
+  )
+}
 
 const NavbarEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: HeroContent) => void }) => {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
@@ -403,12 +443,13 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
       </Card>
 
       <Card title="背景图片">
-        <p className="text-xs text-white/40 mb-3">支持 JPG / PNG / GIF / WebP 等格式，填入图片 URL 地址</p>
+        <p className="text-xs text-white/40 mb-3">支持 JPG / PNG / GIF / WebP 等格式，填 URL 或点下方「上传到云」直传腾讯云 COS</p>
         <Input
           placeholder="https://example.com/bg.jpg（留空则不显示）"
           value={hero.bannerImage}
           onChange={(e) => onChange({ ...hero, bannerImage: e.target.value })}
         />
+        <COSImageUploader value={hero.bannerImage} onPicked={(u) => onChange({ ...hero, bannerImage: u })} />
         {hero.bannerImage && (
           <div className="mt-4 rounded-xl overflow-hidden border border-white/10 bg-[#0C0C0C]">
             <img src={hero.bannerImage} alt="Banner 预览" className="w-full h-auto max-h-[400px] object-cover" />
@@ -547,6 +588,7 @@ const MarqueeEditor = ({ marquee, onChange }: { marquee: MarqueeContent; onChang
           {marquee.row1.map((src, i) => (
             <div key={i} className="bg-[#0C0C0C] rounded-xl border border-white/10 p-3">
               <Input value={src} onChange={(e) => updateImage('row1', i, e.target.value)} />
+              <COSImageUploader value={src} onPicked={(u) => updateImage('row1', i, u)} />
               <ImagePreview src={src} />
               <button onClick={() => removeImage('row1', i)} className="mt-2 text-xs text-red-400 hover:text-red-300">删除</button>
             </div>
@@ -560,6 +602,7 @@ const MarqueeEditor = ({ marquee, onChange }: { marquee: MarqueeContent; onChang
           {marquee.row2.map((src, i) => (
             <div key={i} className="bg-[#0C0C0C] rounded-xl border border-white/10 p-3">
               <Input value={src} onChange={(e) => updateImage('row2', i, e.target.value)} />
+              <COSImageUploader value={src} onPicked={(u) => updateImage('row2', i, u)} />
               <ImagePreview src={src} />
               <button onClick={() => removeImage('row2', i)} className="mt-2 text-xs text-red-400 hover:text-red-300">删除</button>
             </div>
@@ -673,14 +716,15 @@ const AboutEditor = ({ about, onChange }: { about: AboutContent; onChange: (v: A
             <p className="text-xs text-white/40 mt-2">支持 JPG / PNG，会自动压缩到宽度 800px 以内</p>
           </div>
 
-          <div>
-            <Label>或填写图片 URL</Label>
-            <Input
-              placeholder="https://example.com/photo.jpg（留空则显示姓名首字母占位）"
-              value={about.profile.photo}
-              onChange={(e) => updateProfile('photo', e.target.value)}
-            />
-          </div>
+            <div>
+              <Label>或填写图片 URL</Label>
+              <Input
+                placeholder="https://example.com/photo.jpg（留空则显示姓名首字母占位）"
+                value={about.profile.photo}
+                onChange={(e) => updateProfile('photo', e.target.value)}
+              />
+              <COSImageUploader value={about.profile.photo} onPicked={(u) => updateProfile('photo', u)} />
+            </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
@@ -897,6 +941,7 @@ const AboutEditor = ({ about, onChange }: { about: AboutContent; onChange: (v: A
             <div key={key}>
               <Label>{key}</Label>
               <Input value={src} onChange={(e) => updateDecorative(key as keyof AboutContent['decorativeImages'], e.target.value)} />
+              <COSImageUploader value={src} onPicked={(u) => updateDecorative(key as keyof AboutContent['decorativeImages'], u)} />
               <ImagePreview src={src} />
             </div>
           ))}
@@ -1069,16 +1114,19 @@ const ProjectsEditor = ({ projects, onChange }: { projects: ProjectsContent; onC
             <div>
               <Label>左列上图</Label>
               <Input value={item.col1Img1} onChange={(e) => updateItem(i, 'col1Img1', e.target.value)} />
+              <COSImageUploader value={item.col1Img1} onPicked={(u) => updateItem(i, 'col1Img1', u)} />
               <ImagePreview src={item.col1Img1} />
             </div>
             <div>
               <Label>左列下图</Label>
               <Input value={item.col1Img2} onChange={(e) => updateItem(i, 'col1Img2', e.target.value)} />
+              <COSImageUploader value={item.col1Img2} onPicked={(u) => updateItem(i, 'col1Img2', u)} />
               <ImagePreview src={item.col1Img2} />
             </div>
             <div>
               <Label>右列大图</Label>
               <Input value={item.col2Img} onChange={(e) => updateItem(i, 'col2Img', e.target.value)} />
+              <COSImageUploader value={item.col2Img} onPicked={(u) => updateItem(i, 'col2Img', u)} />
               <ImagePreview src={item.col2Img} />
             </div>
           </div>

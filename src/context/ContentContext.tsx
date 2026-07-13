@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { defaultContent, type SiteContent, type TabId } from '../content/siteContent'
+import { isCOSReady, putContentJson } from '../lib/cosClient'
+import { contentJsonUrl } from '../cos-config'
 
 const STORAGE_KEY = 'jack-portfolio-content'
 
@@ -74,20 +76,40 @@ const persistLocal = (content: SiteContent) => {
   }
 }
 
-// 持久化到服务端文件（data/content.json），同时写本地缓存
+// 持久化：配置 COS 时写回云端（实时同步全网）；否则回退到 /api/content（dev 用），同时写本地缓存
 const persistServer = (content: SiteContent) => {
   persistLocal(content)
-  fetch('/api/content', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(content),
-  }).catch(() => {
-    /* 服务端不可用时静默失败，本地缓存仍在 */
-  })
+  if (isCOSReady()) {
+    putContentJson(content).catch(() => {
+      /* 云端写入失败不影响本地缓存 */
+    })
+  } else {
+    fetch('/api/content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(content),
+    }).catch(() => {
+      /* 服务端不可用时静默失败，本地缓存仍在 */
+    })
+  }
 }
 
-// 加载优先级：dev 服务端文件 > 静态烘焙文件（Pages 等纯静态托管）> 本地缓存 > 默认值
+// 加载优先级：云端 COS > dev 服务端文件 > 静态烘焙文件（Pages 等纯静态托管）> 本地缓存 > 默认值
 const loadInitial = async (): Promise<SiteContent> => {
+  // 最高优先级：云端 COS 上的 content.json（配置后所有访客实时同步，无需重新打包部署）
+  if (contentJsonUrl) {
+    try {
+      const res = await fetch(contentJsonUrl, { cache: 'no-cache' })
+      if (res.ok) {
+        const raw = await res.json()
+        if (raw && typeof raw === 'object' && (raw.hero || raw.about || raw.projects || raw.services || raw.marquee)) {
+          return mergeWithDefault(raw)
+        }
+      }
+    } catch {
+      /* COS 不可用时走兜底 */
+    }
+  }
   try {
     const res = await fetch('/api/content')
     if (res.ok) {
