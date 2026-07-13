@@ -18,6 +18,14 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # 构建时注入 GitHub 上传配置：若仓库设置了 Secret GH_TOKEN，则 Pages 站点可直接「上传到 GitHub」；
+    # 未设置时变量为空，站点照常运行，仅上传功能禁用（不影响部署）。
+    env:
+      VITE_GH_REPO: ly1711930646/jack-portfolio
+      VITE_GH_BRANCH: main
+      VITE_GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      VITE_GH_UPLOAD_PATH: public/assets/uploads
+      VITE_GH_CONTENT_KEY: public/data/content.json
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +41,11 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # GitHub Pages 不做 SPA 回退，直接访问 /admin 等子路由会 404。
+      # 把 index.html 复制为 404.html：未知路径时回退到它，前端路由照常渲染。
+      - name: SPA fallback (404.html = index.html)
+        run: cp dist/index.html dist/404.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
