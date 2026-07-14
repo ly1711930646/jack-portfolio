@@ -169,17 +169,9 @@
         "number": "01",
         "name": "Nextlevel Studio",
         "category": "平面设计",
-        "col1Img1": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1784057363297-9q3j6s.webp",
-        "col1Img2": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1784057380526-1ljddy.webp",
-        "col2Img": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1784057389142-p6x8t3.webp"
-      },
-      {
-        "number": "02",
-        "name": "",
-        "category": "",
-        "col1Img1": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1784057410339-zggqrw.webp",
-        "col1Img2": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1784057423574-mt61df.webp",
-        "col2Img": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1784057434149-jq5lrm.webp"
+        "col1Img1": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1784056330001-zjagjk.webp",
+        "col1Img2": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1784056697074-rzoird.webp",
+        "col2Img": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1784056989016-v5qgrq.webp"
       }
     ]
   },
