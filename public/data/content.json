@@ -164,21 +164,21 @@
   },
   "projects": {
     "title": "“ 项目 ”",
+    "filterTabs": [
+      "全部",
+      "UI设计",
+      "跨境电商",
+      "国内电商"
+    ],
     "items": [
       {
         "number": "01",
-        "name": "APP",
-        "category": "UI设计",
+        "name": "Nextlevel Studio",
+        "category": "平面设计",
         "col1Img1": "assets/remote/placeholder-deco-tr.svg",
         "col1Img2": "assets/remote/placeholder-deco-bl.svg",
         "col2Img": "assets/remote/placeholder-deco-br.svg",
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785341933690-gufcwg.jpg"
-      },
-      {
-        "number": "02",
-        "name": "A+",
-        "category": "平面设计",
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785342018039-7bd2yo.jpeg"
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785342918160-4val0r.jpg"
       }
     ]
   },
