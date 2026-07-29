@@ -175,7 +175,7 @@
     ],
     "items": [
       {
-        "number": "1.0",
+        "number": "1-0",
         "name": "Nextlevel Studio",
         "category": "平面设计",
         "col1Img1": "assets/remote/placeholder-deco-tr.svg",
@@ -229,10 +229,12 @@
         ]
       },
       {
-        "number": "07",
-        "name": "",
-        "category": "",
-        "tags": []
+        "number": "1-1",
+        "name": "Nextlevel Studio",
+        "category": "平面设计",
+        "tags": [
+          "UI设计"
+        ]
       }
     ]
   },
