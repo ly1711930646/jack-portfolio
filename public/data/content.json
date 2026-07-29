@@ -174,10 +174,23 @@
       {
         "number": "01",
         "name": "Nextlevel Studio",
-        "category": "平面设计",
+        "category": "UI设计",
         "col1Img1": "assets/remote/placeholder-deco-tr.svg",
         "col1Img2": "assets/remote/placeholder-deco-bl.svg",
-        "col2Img": "assets/remote/placeholder-deco-br.svg"
+        "col2Img": "assets/remote/placeholder-deco-br.svg",
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785344497929-8a782r.jpg"
+      },
+      {
+        "number": "02",
+        "name": "",
+        "category": "跨境电商",
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785344536541-5mthxd.jpeg"
+      },
+      {
+        "number": "03",
+        "name": "",
+        "category": "国内电商",
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785344613753-z5ptyz.jpeg"
       }
     ]
   },
