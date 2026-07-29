@@ -178,19 +178,28 @@
         "col1Img1": "assets/remote/placeholder-deco-tr.svg",
         "col1Img2": "assets/remote/placeholder-deco-bl.svg",
         "col2Img": "assets/remote/placeholder-deco-br.svg",
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785345866341-1wqie4.jpg"
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785345866341-1wqie4.jpg",
+        "tags": [
+          "UI设计"
+        ]
       },
       {
         "number": "02",
-        "name": "",
+        "name": "Nextlevel Studio",
         "category": "跨境电商",
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785345785466-payegm.jpeg"
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785345785466-payegm.jpeg",
+        "tags": [
+          "跨境电商"
+        ]
       },
       {
         "number": "03",
-        "name": "",
+        "name": "Nextlevel Studio",
         "category": "国内电商",
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785345798518-jvsol8.jpeg"
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785345798518-jvsol8.jpeg",
+        "tags": [
+          "国内电商"
+        ]
       }
     ]
   },
