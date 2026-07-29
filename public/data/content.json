@@ -211,6 +211,22 @@
         "tags": [
           "运营设计"
         ]
+      },
+      {
+        "number": "05",
+        "name": "Nextlevel Studio",
+        "category": "品牌设计",
+        "tags": [
+          "品牌设计"
+        ]
+      },
+      {
+        "number": "06",
+        "name": "Nextlevel Studio",
+        "category": "AIGC",
+        "tags": [
+          "AIGC"
+        ]
       }
     ]
   },
