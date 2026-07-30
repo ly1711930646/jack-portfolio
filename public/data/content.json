@@ -79,7 +79,7 @@
     "title": "“ 关于我 ”",
     "text": "深耕UI界面设计与平面视觉设计，具备完整的视觉设计落地能力。熟练把控界面层级、交互体验、版式构图与色彩体系，擅长结合产品需求与品牌调性，打造美观、规范、可落地的视觉方案。",
     "decorativeImages": {
-      "topLeft": "assets/remote/placeholder-deco-tl.svg",
+      "topLeft": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785389917115-6562p0.webp",
       "bottomLeft": "assets/remote/placeholder-deco-bl.svg",
       "topRight": "assets/remote/placeholder-deco-tr.svg",
       "bottomRight": "assets/remote/placeholder-deco-br.svg"
