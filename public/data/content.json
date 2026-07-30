@@ -286,28 +286,6 @@
         "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395427470-059qw5.jpg"
       },
       {
-        "number": "1-5",
-        "name": "硬件  —  表盘设计",
-        "category": "表盘设计",
-        "tags": [
-          "UI设计"
-        ],
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395590994-aw3c6d.png",
-        "images": [
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395598342-8t8yl8.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395621915-5t98c0.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395628327-908z3s.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395635292-aydcag.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395641232-q532k6.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395648241-th0aoq.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395655005-q52h82.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395662907-246ooy.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395668722-0u58qs.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395676608-8oqgu5.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395683166-t8ue30.png"
-        ]
-      },
-      {
         "number": "1-3",
         "name": " 智能手表  —  KOSPET Orb ",
         "category": "独立站-网页设计",
@@ -324,6 +302,28 @@
           "UI设计"
         ],
         "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785401836629-hdzwi1.jpg"
+      },
+      {
+        "number": "1-5",
+        "name": "硬件  —  表盘设计",
+        "category": "表盘设计",
+        "tags": [
+          "UI设计"
+        ],
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785401977868-5vn49k.png",
+        "images": [
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785401984036-za5q3s.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785401990839-bjf5jz.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785401999539-8g3a9l.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402005753-aba6dp.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402013152-nca2be.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402021213-ra7353.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402045386-msrkg2.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402053133-ps6aia.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402060540-nbq1yc.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402067775-ukiezt.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402074466-qg5vt5.png"
+        ]
       }
     ]
   },
