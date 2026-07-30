@@ -286,7 +286,7 @@
         "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395427470-059qw5.jpg"
       },
       {
-        "number": "1-3",
+        "number": "1-5",
         "name": "硬件  —  表盘设计",
         "category": "表盘设计",
         "tags": [
@@ -306,6 +306,24 @@
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395676608-8oqgu5.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785395683166-t8ue30.png"
         ]
+      },
+      {
+        "number": "1-3",
+        "name": " 智能手表  —  KOSPET Orb ",
+        "category": "独立站-网页设计",
+        "tags": [
+          "UI设计"
+        ],
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785401831671-pp24ae.jpg"
+      },
+      {
+        "number": "1-4",
+        "name": " 智能手表  —  KOSPET Pulse ",
+        "category": "独立站-网页设计",
+        "tags": [
+          "UI设计"
+        ],
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785401836629-hdzwi1.jpg"
       }
     ]
   },
