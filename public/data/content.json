@@ -176,7 +176,7 @@
     "items": [
       {
         "number": "1-0",
-        "name": "友趣",
+        "name": "友趣  —  社交APP",
         "category": "APP设计",
         "col1Img1": "assets/remote/placeholder-deco-tr.svg",
         "col1Img2": "assets/remote/placeholder-deco-bl.svg",
@@ -203,7 +203,7 @@
       },
       {
         "number": "1-1",
-        "name": "VPN-工具APP",
+        "name": "VPN  —  工具APP",
         "category": "APP设计",
         "tags": [
           "UI设计"
