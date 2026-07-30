@@ -58,7 +58,7 @@
       "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402276273-u3n3q6.png",
       "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402284885-ns68b2.png",
       "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402294311-9j49sy.png",
-      "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785426055502-cjkuja.png",
+      "assets/remote/placeholder-deco-tl.svg",
       "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785413540971-okivap.jpg",
       "assets/remote/placeholder-deco-bl.svg"
     ],
@@ -359,7 +359,7 @@
       {
         "number": "3-0",
         "name": "个人洗护  —  五谷果酸焕肤沐浴露 ",
-        "category": "淘宝",
+        "category": "详情页",
         "tags": [
           "国内电商"
         ],
@@ -367,6 +367,36 @@
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785416984120-x4loqr.jpg"
         ],
         "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785425085265-bnmvu2.png"
+      },
+      {
+        "number": "5-0",
+        "name": "品牌提案  —  Hysincere",
+        "category": "品牌设计",
+        "tags": [
+          "品牌设计"
+        ],
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427573607-4y7ph6.png",
+        "images": [
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427589695-w8klo2.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427578370-ls928m.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427598057-mm62wm.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427603903-uauuk1.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427611912-5fvvdj.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427618635-nsqjzx.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427626364-q5pkfb.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427635400-64vmmq.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427642945-ybomx7.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427650676-mu61jq.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427659345-8ovl5m.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427666591-anly6r.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427676494-vuxgd0.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427685807-batjop.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427694471-8nwhj7.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427704939-um4gte.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427713503-eh6og9.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427730334-kcaxge.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427736631-9frbli.png"
+        ]
       }
     ]
   },
