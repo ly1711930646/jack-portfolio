@@ -175,8 +175,8 @@
     ],
     "items": [
       {
-        "number": "01",
-        "name": "Nextlevel Studio",
+        "number": "1-0",
+        "name": "友趣",
         "category": "APP设计",
         "col1Img1": "assets/remote/placeholder-deco-tr.svg",
         "col1Img2": "assets/remote/placeholder-deco-bl.svg",
@@ -202,53 +202,30 @@
         ]
       },
       {
-        "number": "02",
-        "name": "Nextlevel Studio",
-        "category": "跨境电商",
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785345785466-payegm.jpeg",
-        "tags": [
-          "跨境电商"
-        ]
-      },
-      {
-        "number": "03",
-        "name": "Nextlevel Studio",
-        "category": "国内电商",
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785345798518-jvsol8.jpeg",
-        "tags": [
-          "国内电商"
-        ]
-      },
-      {
-        "number": "04",
-        "name": "Nextlevel Studio",
-        "category": "运营设计",
-        "tags": [
-          "运营设计"
-        ]
-      },
-      {
-        "number": "05",
-        "name": "Nextlevel Studio",
-        "category": "品牌设计",
-        "tags": [
-          "品牌设计"
-        ]
-      },
-      {
-        "number": "06",
-        "name": "Nextlevel Studio",
-        "category": "AIGC",
-        "tags": [
-          "AIGC"
-        ]
-      },
-      {
         "number": "1-1",
-        "name": "Nextlevel Studio",
-        "category": "平面设计",
+        "name": "VPN-工具APP",
+        "category": "APP设计",
         "tags": [
           "UI设计"
+        ],
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386362203-ea9v6c.png",
+        "images": [
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386372704-d4ymo7.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386379881-pgml9c.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386387248-r5trds.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386392694-2jkgmw.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386401875-uootej.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386408273-v7ynux.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386414387-9tmr05.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386420136-8hmcxr.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386428979-jb3v4h.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386435043-bi4fco.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386440691-3wd7vn.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386448869-v8pda0.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386455220-97o3t1.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386465995-kb7h4w.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386476841-ch7nwp.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386487484-svxsj6.png"
         ]
       }
     ]
