@@ -324,6 +324,15 @@
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402067775-ukiezt.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402074466-qg5vt5.png"
         ]
+      },
+      {
+        "number": "09",
+        "name": "储能电池- AI合成",
+        "category": "AIGC",
+        "tags": [
+          "AIGC"
+        ],
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785411621488-zea52u.jpg"
       }
     ]
   },
