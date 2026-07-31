@@ -28,7 +28,7 @@
     "subtitle": "a 3d creator driven by crafting striking and unforgettable projects",
     "portraitImage": "assets/uploads/1784053592568-552htg.jpg",
     "bannerImage": "",
-    "bannerVideo": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785520623421-im1mdm.mp4",
+    "bannerVideo": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785405614888-imazyt.mp4",
     "bannerText": "看见，不止于想象",
     "bannerTextSize": "180",
     "bannerTextColor": "#FFFFFF",
@@ -36,6 +36,7 @@
     "bannerTextWeight": "700",
     "bannerTextAlign": "center",
     "bannerTextVPosition": "center",
+    "bannerContentOffsetY": "-116",
     "bannerSubtitle": "好设计，从第一眼就打动人心",
     "bannerSubtitleSize": "26",
     "bannerSubtitleColor": "#FFFFFF",
@@ -59,14 +60,15 @@
       "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402284885-ns68b2.png",
       "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402294311-9j49sy.png",
       "assets/remote/placeholder-deco-tl.svg",
-      "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785413540971-okivap.jpg",
+      "assets/remote/placeholder-deco-tr.svg",
       "assets/remote/placeholder-deco-bl.svg"
     ],
     "row2": [
-      "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785432673458-ui1wxw.png",
-      "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785497312127-m7qfib.jpg",
-      "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785497317499-0mro6x.png",
-      "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785497322084-s6eyxa.png",
+      "assets/remote/placeholder-deco-br.svg",
+      "assets/remote/placeholder-banner.svg",
+      "assets/remote/placeholder-portrait.svg",
+      "assets/remote/placeholder-deco-tl.svg",
+      "assets/remote/placeholder-deco-tr.svg",
       "assets/remote/placeholder-deco-bl.svg",
       "assets/remote/placeholder-deco-br.svg",
       "assets/remote/placeholder-banner.svg",
@@ -188,7 +190,7 @@
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785383253750-0cw39j.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785383277139-7pzaqj.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785383287312-c2xdiw.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785432947262-pdueet.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785383295087-5jb2lp.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785383300824-811iy1.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785383332464-x9i3ji.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785383338653-yt9d8i.png",
@@ -207,23 +209,24 @@
         "tags": [
           "UI设计"
         ],
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433032257-r261v3.png",
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386362203-ea9v6c.png",
         "images": [
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433010344-ew7s4s.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433042203-ogjiz4.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433048978-ex3b7y.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433055289-jy5gmu.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433062213-kuwmrd.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433068426-her7hz.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433075036-81dohw.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433080575-hjthy2.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433087619-rr24a0.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433097438-c1nty0.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433105937-fse79t.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433185012-awz4le.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433192117-blx3ph.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433199564-semnm3.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433206956-2etwnl.png"
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386372704-d4ymo7.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386379881-pgml9c.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386387248-r5trds.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386392694-2jkgmw.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386401875-uootej.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386408273-v7ynux.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386414387-9tmr05.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386420136-8hmcxr.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386428979-jb3v4h.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386435043-bi4fco.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386440691-3wd7vn.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386448869-v8pda0.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386455220-97o3t1.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386465995-kb7h4w.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386476841-ch7nwp.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785386487484-svxsj6.png"
         ]
       },
       {
@@ -259,7 +262,7 @@
           "跨境电商"
         ],
         "images": [
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433342907-iyh211.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785394234841-7tv6db.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785394249365-0x9lih.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785394255816-2otwqr.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785394262253-hcr7cu.png",
@@ -318,7 +321,7 @@
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402021213-ra7353.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402045386-msrkg2.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402053133-ps6aia.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785433234545-8x4xgu.png",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402060540-nbq1yc.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402067775-ukiezt.png",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785402074466-qg5vt5.png"
         ]
@@ -352,100 +355,6 @@
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785412409856-txhtba.jpg",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785412421953-w8jlj6.jpg",
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785412432076-qnbowx.jpg"
-        ]
-      },
-      {
-        "number": "3-0",
-        "name": "个人洗护  —  五谷果酸焕肤沐浴露 ",
-        "category": "详情页",
-        "tags": [
-          "国内电商"
-        ],
-        "images": [
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785416984120-x4loqr.jpg"
-        ],
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785425085265-bnmvu2.png"
-      },
-      {
-        "number": "5-0",
-        "name": "品牌提案  —  Hysincere",
-        "category": "品牌设计",
-        "tags": [
-          "品牌设计"
-        ],
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427573607-4y7ph6.png",
-        "images": [
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427589695-w8klo2.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427578370-ls928m.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427598057-mm62wm.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427603903-uauuk1.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427611912-5fvvdj.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427618635-nsqjzx.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427626364-q5pkfb.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427635400-64vmmq.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427642945-ybomx7.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427650676-mu61jq.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427659345-8ovl5m.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427666591-anly6r.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427676494-vuxgd0.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427685807-batjop.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427694471-8nwhj7.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427704939-um4gte.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427713503-eh6og9.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427730334-kcaxge.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785427736631-9frbli.png"
-        ]
-      },
-      {
-        "number": "2-3",
-        "name": "摄像头  —  无线红外摄像头 ",
-        "category": "A+ 设计",
-        "tags": [
-          "跨境电商"
-        ],
-        "images": [
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785432557219-j3snbd.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785432564878-05lpp1.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785432571582-q702e6.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785432579057-p4m5tg.png",
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785432584744-vdxdec.png"
-        ],
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785432498140-q9gfy4.png"
-      },
-      {
-        "number": "5-1",
-        "name": "品牌设计  —  企业工业宣传册 ",
-        "category": "画册设计",
-        "tags": [
-          "品牌设计"
-        ],
-        "images": [
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785496091187-87wfoi.jpg"
-        ],
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785496083100-0n8wdj.jpg"
-      },
-      {
-        "number": "5-2",
-        "name": "品牌设计  —  企业宣传册 ",
-        "category": "画册设计",
-        "tags": [
-          "品牌设计"
-        ],
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785496128459-8ksfwk.png",
-        "images": [
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785496133073-qnyqoa.jpg"
-        ]
-      },
-      {
-        "number": "5-3",
-        "name": "品牌设计  —  企业宣传册 ",
-        "category": "画册设计",
-        "tags": [
-          "品牌设计"
-        ],
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785496165703-bb5nzu.png",
-        "images": [
-          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785496177199-pqiyib.jpg"
         ]
       }
     ]
