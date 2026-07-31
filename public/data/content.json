@@ -411,6 +411,30 @@
           "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785432584744-vdxdec.png"
         ],
         "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785432498140-q9gfy4.png"
+      },
+      {
+        "number": "5-1",
+        "name": "品牌设计  —  企业宣传册 ",
+        "category": "画册设计",
+        "tags": [
+          "品牌设计"
+        ],
+        "images": [
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785494922117-o0pqys.jpg"
+        ],
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785495173394-aal8mh.png"
+      },
+      {
+        "number": "5-2",
+        "name": "品牌设计  —  企业宣传册 ",
+        "category": "品牌画册",
+        "tags": [
+          "品牌设计"
+        ],
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785495277301-4g7419.png",
+        "images": [
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785495098086-qohpqz.jpg"
+        ]
       }
     ]
   },
