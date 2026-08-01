@@ -57,6 +57,8 @@ const LEGACY_JSDELIVR_MIRROR_HOST = 'https://jsd.cdn.zzko.cn'
 // （/jack-portfolio/assets/...）。只处理本项目生成的链接，不会误改第三方 URL。
 const migrateLegacyJsdelivrUrl = (value: string): string => {
   if (!value || typeof value !== 'string') return value
+
+  // 1. 处理历史 CDN / raw 前缀
   const prefixes = [
     `${LEGACY_JSDELIVR_HOST}/gh/${repo}@${branch}/public/`,
     `${LEGACY_JSDELIVR_MIRROR_HOST}/gh/${repo}@${branch}/public/`,
@@ -65,10 +67,25 @@ const migrateLegacyJsdelivrUrl = (value: string): string => {
   for (const p of prefixes) {
     if (value.startsWith(p)) return toServedUrl(value.slice(p.length))
   }
-  // 已经是同源 /assets/uploads/ 形式（可能被旧代码写成 /assets/uploads/ 或 /jack-portfolio/assets/uploads/）
+
+  // 2. 修复因历史 bug 导致的重复路径 /jack-portfolio/assets/uploads/assets/uploads/...
+  //    以及 assets/uploads/assets/uploads/...
+  const dupSite = `${SITE_BASE}assets/uploads/assets/uploads/`
+  if (value.includes(dupSite)) {
+    return value.replace(new RegExp(dupSite.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), `${SITE_BASE}assets/uploads/`)
+  }
+  const dupRel = 'assets/uploads/assets/uploads/'
+  if (value.includes(dupRel)) {
+    return toServedUrl(value.replace(new RegExp(dupRel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), 'assets/uploads/'))
+  }
+
+  // 3. 已经是同源 /assets/uploads/ 形式（可能被旧代码写成 /assets/uploads/ 或 /jack-portfolio/assets/uploads/）
   if (value.includes('/assets/uploads/')) {
     const upIdx = value.indexOf('/assets/uploads/')
     return toServedUrl(value.slice(upIdx + 1)) // 去掉开头的 '/'
+  }
+  if (value.startsWith('assets/uploads/')) {
+    return toServedUrl(value)
   }
   return value
 }
