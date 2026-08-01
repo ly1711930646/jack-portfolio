@@ -33,13 +33,17 @@ const ProjectCard = forwardRef<HTMLDivElement, {
 }, ref) => {
   const cardRef = useRef<HTMLDivElement>(null)
   const glowRef = useRef<HTMLDivElement>(null)
+  const cardRafRef = useRef<number | null>(null)
+  const cardMouseRef = useRef({ x: 0, y: 0 })
 
   // spotlight 光效：坐标设置在 .spotlight-glow 层上（而非卡片本身）。
   // glow 层比卡片向外扩展 80px，光晕可自然溢出四边，不会被卡片圆角/堆叠裁切。
   // --xp/--yp 仍为相对视口比例，用于色相随鼠标横向扩散。
-  const updateCardSpotlight = (x: number, y: number) => {
+  const flushCardSpotlight = () => {
+    cardRafRef.current = null
     const glow = glowRef.current
     if (!glow) return
+    const { x, y } = cardMouseRef.current
     const r = glow.getBoundingClientRect()
     const localX = x - r.left
     const localY = y - r.top
@@ -50,7 +54,17 @@ const ProjectCard = forwardRef<HTMLDivElement, {
   }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    updateCardSpotlight(e.clientX, e.clientY)
+    cardMouseRef.current = { x: e.clientX, y: e.clientY }
+    if (!cardRafRef.current) {
+      cardRafRef.current = requestAnimationFrame(flushCardSpotlight)
+    }
+  }
+
+  const handleMouseLeave = () => {
+    if (cardRafRef.current) {
+      cancelAnimationFrame(cardRafRef.current)
+      cardRafRef.current = null
+    }
   }
 
   // 用纯 CSS sticky 实现"卡片堆叠"视觉,不再用 framer-motion useScroll
@@ -76,6 +90,7 @@ const ProjectCard = forwardRef<HTMLDivElement, {
       <div
         ref={cardRef}
         onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
         onContextMenu={(e) => e.preventDefault()}
         className={[
           'spotlight-card relative w-full rounded-[24px] sm:rounded-[32px] md:rounded-[40px] border-[#D7E2EA] bg-[#0C0C0C] p-4 sm:p-6 md:p-8 pointer-events-auto',
@@ -150,6 +165,8 @@ const ProjectsSection = () => {
   //（解决被前面卡片盖住时，后面卡片自己的 onMouseEnter 无法触发的问题）
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const lastMousePos = useRef({ x: 0, y: 0 })
+  const spotlightRafRef = useRef<number | null>(null)
+  const spotlightPendingRef = useRef(false)
 
   // 每张卡片的拖拽位移（容器级统一管理）
   const [cardDrags, setCardDrags] = useState<{ x: number; y: number }[]>([])
@@ -224,8 +241,20 @@ const ProjectsSection = () => {
     card.style.setProperty('--yp', yp)
   }, [])
 
-  // 光效使用元素相对坐标（--x/--y），卡片滑动时光斑会随卡片一起移动，
-  // 因此只需在鼠标移动时更新一次即可。
+  // 光效更新通过 requestAnimationFrame 节流，避免 mousemove 高频事件直接触发样式重绘
+  const flushSpotlight = useCallback(() => {
+    spotlightRafRef.current = null
+    if (!spotlightPendingRef.current) return
+    spotlightPendingRef.current = false
+    updateSpotlight(hoveredIndex)
+  }, [hoveredIndex, updateSpotlight])
+
+  const scheduleSpotlightUpdate = useCallback(() => {
+    spotlightPendingRef.current = true
+    if (!spotlightRafRef.current) {
+      spotlightRafRef.current = requestAnimationFrame(flushSpotlight)
+    }
+  }, [flushSpotlight])
 
   // section 级鼠标命中：
   // - 顶牌（rect.top 最小）的整个矩形区域可交互；
@@ -288,11 +317,16 @@ const ProjectsSection = () => {
     }
 
     setHoveredIndex(next)
-    updateSpotlight(next)
-  }, [updateSpotlight])
+    scheduleSpotlightUpdate()
+  }, [scheduleSpotlightUpdate])
 
   const handleSectionMouseLeave = useCallback(() => {
     setHoveredIndex(null)
+    spotlightPendingRef.current = false
+    if (spotlightRafRef.current) {
+      cancelAnimationFrame(spotlightRafRef.current)
+      spotlightRafRef.current = null
+    }
   }, [])
 
   // 使用原生事件监听 section 级 mousemove/mouseleave：
@@ -305,6 +339,10 @@ const ProjectsSection = () => {
     return () => {
       section.removeEventListener('mousemove', handleSectionMouseMove)
       section.removeEventListener('mouseleave', handleSectionMouseLeave)
+      if (spotlightRafRef.current) {
+        cancelAnimationFrame(spotlightRafRef.current)
+        spotlightRafRef.current = null
+      }
     }
   }, [handleSectionMouseMove, handleSectionMouseLeave])
 
