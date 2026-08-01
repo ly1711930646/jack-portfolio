@@ -37,12 +37,25 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
   const rafRef = useRef<number | null>(null)
   const mouseRef = useRef({ x: 0, y: 0 })
   const hintTimeoutRef = useRef<number | null>(null)
+  const closeTimeoutRef = useRef<number | null>(null)
   const [showHint, setShowHint] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
+
+  const CLOSE_ANIM_MS = 520
 
   const triggerHint = () => {
+    if (isClosing) return
     setShowHint(true)
     if (hintTimeoutRef.current) window.clearTimeout(hintTimeoutRef.current)
     hintTimeoutRef.current = window.setTimeout(() => setShowHint(false), 2500)
+  }
+
+  const requestClose = () => {
+    if (isClosing) return
+    setIsClosing(true)
+    closeTimeoutRef.current = window.setTimeout(() => {
+      onClose()
+    }, CLOSE_ANIM_MS)
   }
 
   const containerVariants: Variants = {
@@ -70,6 +83,7 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
       document.body.classList.remove('modal-open')
       document.body.style.overflow = prev
       if (hintTimeoutRef.current) window.clearTimeout(hintTimeoutRef.current)
+      if (closeTimeoutRef.current) window.clearTimeout(closeTimeoutRef.current)
     }
   }, [])
 
@@ -135,12 +149,12 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
   return (
     <motion.div
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      animate={{ opacity: isClosing ? 0 : 1 }}
       transition={{ duration: 0.45, ease: 'easeOut' }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 sm:p-6 md:p-10 bg-black/70 backdrop-blur-md"
       onClick={triggerHint}
       style={{ willChange: 'opacity', perspective: '1200px' }}
+      data-closing={isClosing}
     >
       <AnimatePresence>
         {showHint && (
@@ -159,9 +173,12 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
 
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 32, rotateX: -8 }}
-        animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
-        exit={{ opacity: 0, scale: 0.78, y: -28, rotateX: 12, rotateY: -6 }}
-        transition={{ duration: 0.5, ease: [0.32, 0, 0.67, 0] }}
+        animate={
+          isClosing
+            ? { opacity: 0, scale: 0.62, y: -56, rotateX: 22, rotateY: -12 }
+            : { opacity: 1, scale: 1, y: 0, rotateX: 0 }
+        }
+        transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
         ref={modalRef}
         className="relative w-full max-w-4xl xl:max-w-5xl bg-[#0f0f0f] border border-white/[0.06] rounded-[2rem] shadow-2xl overflow-hidden max-h-[92vh] modal-shell origin-top-right"
         style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}
@@ -208,7 +225,7 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
           {/* Right: info card */}
           <motion.div variants={itemVariants} className="relative flex-1 bg-[#141414] border border-white/[0.05] rounded-3xl p-6 sm:p-7 md:p-8 flex flex-col justify-between">
             <button
-              onClick={onClose}
+              onClick={requestClose}
               className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white/50 hover:text-white transition-colors text-lg sm:text-xl leading-none"
               aria-label="关闭"
             >
