@@ -290,15 +290,19 @@ html, body, #root {
   overflow: visible;
 }
 
-/* 光标跟随的彩色柔光 */
+/* 光标跟随的彩色柔光：使用 translate3d 代替 left/top，避免每帧重排 */
 .spotlight-glow::before {
   content: '';
   position: absolute;
-  left: calc(var(--x, -9999) * 1px);
-  top: calc(var(--y, -9999) * 1px);
+  left: 0;
+  top: 0;
   width: var(--spotlight-size);
   height: var(--spotlight-size);
-  transform: translate(-50%, -50%);
+  transform: translate3d(
+    calc(var(--x, -9999) * 1px - var(--spotlight-size) / 2),
+    calc(var(--y, -9999) * 1px - var(--spotlight-size) / 2),
+    0
+  );
   border-radius: 50%;
   background: radial-gradient(
     circle at center,
@@ -308,17 +312,22 @@ html, body, #root {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
+  will-change: transform;
 }
 
 /* 光标跟随的白色高光芯 */
 .spotlight-glow::after {
   content: '';
   position: absolute;
-  left: calc(var(--x, -9999) * 1px);
-  top: calc(var(--y, -9999) * 1px);
+  left: 0;
+  top: 0;
   width: calc(var(--spotlight-size) * 0.42);
   height: calc(var(--spotlight-size) * 0.42);
-  transform: translate(-50%, -50%);
+  transform: translate3d(
+    calc(var(--x, -9999) * 1px - var(--spotlight-size) * 0.21),
+    calc(var(--y, -9999) * 1px - var(--spotlight-size) * 0.21),
+    0
+  );
   border-radius: 50%;
   background: radial-gradient(
     circle at center,
@@ -328,6 +337,7 @@ html, body, #root {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
+  will-change: transform;
 }
 
 .spotlight-wrapper.is-active .spotlight-glow::before,
