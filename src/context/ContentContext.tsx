@@ -5,6 +5,19 @@ import { contentJsonUrl, githubConfig, migrateLegacyJsdelivrUrls } from '../gith
 
 const STORAGE_KEY = 'jack-portfolio-content'
 
+// 调试用：把加载进度打印到页面上的 #__debug 区域
+const debug = (msg: string) => {
+  console.log('[ContentContext]', msg)
+  try {
+    const w = window as unknown as Record<string, unknown>
+    if (typeof w.__debugLog === 'function') {
+      w.__debugLog(msg)
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 interface ContentContextType {
   content: SiteContent
   loading: boolean
@@ -118,25 +131,28 @@ const base64ToUtf8 = (base64: string): string => {
   return new TextDecoder().decode(bytes)
 }
 
-// 从 jsDelivr 加载 content.json（国内可直连，但可能有 CDN 缓存）。
+// 从 GitHub Pages 同源静态文件加载 content.json（最快，适合首屏秒开）。
+// contentJsonUrl 当前已指向 /jack-portfolio/data/content.json。
 // 失败时不抛错，由调用方决定回退策略。
-const loadFromJsdelivr = async (): Promise<SiteContent | null> => {
+const loadFromStatic = async (): Promise<SiteContent | null> => {
   if (!contentJsonUrl) return null
   try {
+    debug('loadFromStatic start')
     const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), 6000)
-    // cache: 'no-store' 强制绕过浏览器缓存；URL 加 _t= 进一步让 jsDelivr 边缘走不同 cache key
+    const timer = setTimeout(() => ctrl.abort(), 3000)
     const res = await fetch(`${contentJsonUrl}${contentJsonUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`, { cache: 'no-store', signal: ctrl.signal })
     clearTimeout(timer)
     if (res.ok) {
       const raw = await res.json()
       if (raw && typeof raw === 'object' && (raw.hero || raw.about || raw.projects || raw.services || raw.marquee)) {
+        debug('loadFromStatic ok')
         return mergeWithDefault(raw)
       }
     }
   } catch {
     /* ignore */
   }
+  debug('loadFromStatic failed')
   return null
 }
 
@@ -145,6 +161,7 @@ const loadFromJsdelivr = async (): Promise<SiteContent | null> => {
 const loadFromGitHubApi = async (): Promise<SiteContent | null> => {
   if (!isGitHubReady()) return null
   try {
+    debug('loadFromGitHubApi start')
     // 关键：URL 加 cache-buster + 完全不发送 If-None-Match header + Cache-Control: no-store + max-age=0
     //
     // 之前用 If-None-Match: '*'，但 GitHub API 居然把 '*' 当作合法 ETag 匹配 → 返回 304 空 body
@@ -154,7 +171,7 @@ const loadFromGitHubApi = async (): Promise<SiteContent | null> => {
     // 现在彻底不发送 If-None-Match header，让 GitHub 不知道客户端有缓存版本，永远返 200 + 完整 body。
     const url = `https://api.github.com/repos/${githubConfig.repo}/contents/${encodeURI(githubConfig.contentKey)}?ref=${githubConfig.branch}&_t=${Date.now()}`
     const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), 8000)
+    const timer = setTimeout(() => ctrl.abort(), 5000)
     const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${githubConfig.token}`,
@@ -169,12 +186,14 @@ const loadFromGitHubApi = async (): Promise<SiteContent | null> => {
       const data = await res.json()
       const raw = data.content ? JSON.parse(base64ToUtf8(data.content)) : null
       if (raw && typeof raw === 'object' && (raw.hero || raw.about || raw.projects || raw.services || raw.marquee)) {
+        debug('loadFromGitHubApi ok')
         return mergeWithDefault(raw)
       }
     }
   } catch {
     /* ignore */
   }
+  debug('loadFromGitHubApi failed')
   return null
 }
 
@@ -189,20 +208,26 @@ const loadFromLocal = (): SiteContent | null => {
   return null
 }
 
-// 加载优先级（GitHub 模式）：GitHub API（无缓存、最权威）> 本地兜底 > jsDelivr（有 CDN 旧缓存风险）> dev 服务端 > 静态烘焙文件 > 默认值
-// 关键：本地兜底排在 jsDelivr 之前。本地副本只会在云端写入成功后才更新（见 doPersist），
-// 因此一定比 jsDelivr 的 CDN 边缘缓存更新、更可信；用本地兜底可避免 GitHub API 偶发失败
-// 时回退到 jsDelivr 的旧缓存内容（刷新"变旧数据"的隐藏根因之一）。
+// 加载优先级：
+// 1. 同源静态文件（/jack-portfolio/data/content.json）— 最快，让 GitHub Pages 首屏秒开。
+// 2. GitHub API（最权威）— 后台再拉取一次，如果比静态新则静默更新。
+// 3. 本地 localStorage 兜底。
+// 4. 默认值。
 const loadInitial = async (): Promise<SiteContent> => {
+  debug('loadInitial start')
+
+  // 1. 优先同源静态，超时 3 秒，首屏秒开
+  const staticContent = await loadFromStatic()
+  if (staticContent) return staticContent
+
+  // 2. GitHub API（权威但慢，5 秒超时）
   if (isGitHubReady()) {
     const github = await loadFromGitHubApi()
     if (github) return github
 
+    // 3. GitHub API 失败时用本地缓存兜底
     const local = loadFromLocal()
     if (local) return local
-
-    const jsdelivr = await loadFromJsdelivr()
-    if (jsdelivr) return jsdelivr
 
     return defaultContent
   }
@@ -247,24 +272,25 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let cancelled = false
-    // 启动超时保护：如果 8 秒内还没从主源（GitHub API / 服务端）拿到数据，
-    // 兜底用本地 localStorage（最近一次成功保存的快照），避免极慢网络下看到空白默认内容。
-    // 注意：这里只回退到本地兜底，不会去碰 jsDelivr CDN，避免展示 CDN 旧缓存。
-    const fallbackTimer = setTimeout(() => {
-      if (cancelled) return
-      const local = loadFromLocal()
-      if (local) setContent(local)
-    }, 8000)
 
     loadInitial().then((c) => {
       if (cancelled) return
-      clearTimeout(fallbackTimer)
+      debug('loadInitial done, setContent')
       setContent(c)
       setLoading(false)
+
+      // 首屏渲染后，后台再用 GitHub API 拉一次最权威数据，如有更新则静默替换。
+      // 这样用户先看到静态内容，不会因 GitHub API 慢而卡黑屏。
+      if (isGitHubReady()) {
+        loadFromGitHubApi().then((fresh) => {
+          if (cancelled || !fresh) return
+          debug('GitHub API fresh content loaded')
+          setContent(fresh)
+        })
+      }
     })
     return () => {
       cancelled = true
-      clearTimeout(fallbackTimer)
     }
   }, [])
 
