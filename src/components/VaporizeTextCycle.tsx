@@ -56,33 +56,47 @@ type TextBoundaries = {
 type FireworkRocket = {
   x: number
   y: number
-  targetY: number
+  px: number
+  py: number
   vx: number
   vy: number
+  gravity: number
   color: string
   trail: { x: number; y: number; alpha: number }[]
-  exploded: boolean
   dead: boolean
 }
 
 type FireworkParticle = {
   x: number
   y: number
+  px: number
+  py: number
   vx: number
   vy: number
   color: string
   alpha: number
   decay: number
   gravity: number
+  drag: number
+  size: number
 }
 
+type FireworkFlash = {
+  x: number
+  y: number
+  color: string
+  alpha: number
+  radius: number
+}
+
+// 暖色调（红/金/橙/粉），符合「红色系」烟花观感；存为 "r, g, b" 便于拼 rgba
 const FIREWORK_COLORS = [
-  'rgba(255, 215, 0, 1)',   // 金
-  'rgba(255, 77, 77, 1)',   // 红
-  'rgba(77, 255, 77, 1)',   // 绿
-  'rgba(77, 255, 255, 1)',  // 青
-  'rgba(255, 77, 255, 1)',  // 洋红
-  'rgba(255, 255, 255, 1)', // 白
+  '255, 70, 70',    // 红
+  '255, 130, 50',   // 橙
+  '255, 200, 70',   // 金
+  '255, 95, 130',   // 玫红
+  '255, 165, 95',   // 琥珀
+  '255, 240, 200',  // 暖白
 ]
 
 declare global {
@@ -118,9 +132,10 @@ export default function VaporizeTextCycle({
   const lastFontRef = useRef<string | null>(null)
   const particlesRef = useRef<Particle[]>([])
   const animationFrameRef = useRef<number | null>(null)
-  const fireworksRef = useRef<{ rockets: FireworkRocket[]; particles: FireworkParticle[] }>({
+  const fireworksRef = useRef<{ rockets: FireworkRocket[]; particles: FireworkParticle[]; flashes: FireworkFlash[] }>({
     rockets: [],
     particles: [],
+    flashes: [],
   })
   const [currentTextIndex, setCurrentTextIndex] = useState(0)
   const [animationState, setAnimationState] = useState<'static' | 'vaporizing' | 'fadingIn' | 'waiting'>('static')
@@ -225,123 +240,186 @@ export default function VaporizeTextCycle({
     [globalDpr]
   )
 
-  const launchFireworks = useCallback((canvas: HTMLCanvasElement, count = 5) => {
+  const launchFireworks = useCallback((canvas: HTMLCanvasElement, count = 5, dpr = 1) => {
     const rockets = fireworksRef.current.rockets
     const w = canvas.width
     const h = canvas.height
+    const gravity = 0.16 * dpr
     for (let i = 0; i < count; i++) {
-      const targetX = w * (0.2 + Math.random() * 0.6)
-      const targetY = h * (0.15 + Math.random() * 0.3)
-      const startX = w * (0.1 + Math.random() * 0.8)
+      const startX = w * (0.15 + Math.random() * 0.7)
       const startY = h
-      const duration = 60 + Math.random() * 40
-      const dx = targetX - startX
-      const dy = targetY - startY
+      // 目标爆点高度：屏幕上方 12%~34%
+      const targetY = h * (0.12 + Math.random() * 0.22)
+      // 由能量守恒估算初速度，使火箭恰好在 targetY 附近到达顶点自然炸开
+      const vy0 = -Math.sqrt(Math.max(0, 2 * gravity * (startY - targetY))) * (0.96 + Math.random() * 0.08)
       rockets.push({
         x: startX,
         y: startY,
-        targetY,
-        vx: dx / duration,
-        vy: dy / duration,
+        px: startX,
+        py: startY,
+        vx: (Math.random() - 0.5) * 0.6 * dpr,
+        vy: vy0,
+        gravity,
         color: FIREWORK_COLORS[(Math.random() * FIREWORK_COLORS.length) | 0],
         trail: [],
-        exploded: false,
         dead: false,
       })
     }
   }, [])
 
-  const explodeFirework = useCallback((x: number, y: number, color: string) => {
-    const particles = fireworksRef.current.particles
-    const count = 30 + ((Math.random() * 20) | 0)
+  const explodeFirework = useCallback((x: number, y: number, color: string, dpr = 1) => {
+    const { particles, flashes } = fireworksRef.current
+    // 爆心瞬间的强光闪
+    flashes.push({ x, y, color, alpha: 1, radius: 16 * dpr })
+    const count = 90 + ((Math.random() * 70) | 0)
+    const baseSpeed = (2.4 + Math.random() * 1.6) * dpr
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2
-      const speed = Math.random() * 4 + 1
+      // sqrt 分布 → 实心球投影，更接近真实爆裂；少量高速火星作点缀
+      let speed = baseSpeed * Math.sqrt(Math.random()) * (0.5 + Math.random() * 0.5)
+      if (Math.random() < 0.06) speed *= 1.7
       particles.push({
         x,
         y,
+        px: x,
+        py: y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         color,
         alpha: 1,
-        decay: 0.01 + Math.random() * 0.015,
-        gravity: 0.08,
+        decay: 0.006 + Math.random() * 0.006,
+        gravity: 0.045 * dpr,
+        drag: 0.985,
+        size: (1 + Math.random() * 1.3) * dpr,
       })
     }
   }, [])
 
   const updateFireworks = useCallback(() => {
-    const rockets = fireworksRef.current.rockets
-      const particles = fireworksRef.current.particles
+    const { rockets, particles, flashes } = fireworksRef.current
 
-      for (let i = rockets.length - 1; i >= 0; i--) {
-        const r = rockets[i]
-        if (r.dead) continue
-
-        r.trail.push({ x: r.x, y: r.y, alpha: 1 })
-        if (r.trail.length > 10) r.trail.shift()
-        r.trail.forEach((t) => {
-          t.alpha -= 0.12
-        })
-
-        r.x += r.vx
-        r.y += r.vy
-        r.vy += 0.06
-
-        if (r.vy >= 0 || r.y <= r.targetY) {
-          explodeFirework(r.x, r.y, r.color)
-          r.exploded = true
-          r.dead = true
-        }
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const r = rockets[i]
+      if (r.dead) continue
+      r.px = r.x
+      r.py = r.y
+      r.vy += r.gravity
+      r.x += r.vx
+      r.y += r.vy
+      r.trail.push({ x: r.x, y: r.y, alpha: 1 })
+      if (r.trail.length > 14) r.trail.shift()
+      r.trail.forEach((t) => {
+        t.alpha -= 0.08
+      })
+      // 到达顶点（不再上升）即炸开，最自然
+      if (r.vy >= 0) {
+        explodeFirework(r.x, r.y, r.color)
+        r.dead = true
       }
+    }
 
-      fireworksRef.current.rockets = rockets.filter((r) => !r.dead)
+    fireworksRef.current.rockets = rockets.filter((r) => !r.dead)
 
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i]
-        p.vy += p.gravity
-        p.x += p.vx
-        p.y += p.vy
-        p.alpha -= p.decay
-        if (p.alpha <= 0) {
-          particles.splice(i, 1)
-        }
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i]
+      p.px = p.x
+      p.py = p.y
+      p.vx *= p.drag
+      p.vy *= p.drag
+      p.vy += p.gravity
+      p.x += p.vx
+      p.y += p.vy
+      p.alpha -= p.decay
+      if (p.alpha <= 0) {
+        particles.splice(i, 1)
       }
-    },
-    [explodeFirework]
-  )
+    }
+
+    for (let i = flashes.length - 1; i >= 0; i--) {
+      const f = flashes[i]
+      f.alpha -= 0.09
+      f.radius += 0.8
+      if (f.alpha <= 0) {
+        flashes.splice(i, 1)
+      }
+    }
+  }, [explodeFirework])
 
   const renderFireworks = useCallback(
     (ctx: CanvasRenderingContext2D) => {
       ctx.save()
       ctx.scale(globalDpr, globalDpr)
+      // 叠加混合产生真实辉光
+      ctx.globalCompositeOperation = 'lighter'
 
-      const rockets = fireworksRef.current.rockets
-      const particles = fireworksRef.current.particles
+      const { rockets, particles, flashes } = fireworksRef.current
 
-      rockets.forEach((r) => {
-        r.trail.forEach((t) => {
-          if (t.alpha <= 0) return
-          ctx.beginPath()
-          ctx.arc(t.x / globalDpr, t.y / globalDpr, 1.5, 0, Math.PI * 2)
-          ctx.fillStyle = r.color.replace(/[\d.]+\)$/, `${t.alpha})`)
-          ctx.fill()
-        })
+      // 爆心闪光（径向渐变）
+      flashes.forEach((f) => {
+        const fx = f.x / globalDpr
+        const fy = f.y / globalDpr
+        const fr = f.radius / globalDpr
+        const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, fr)
+        g.addColorStop(0, `rgba(${f.color}, ${Math.max(0, f.alpha)})`)
+        g.addColorStop(0.4, `rgba(${f.color}, ${Math.max(0, f.alpha * 0.5)})`)
+        g.addColorStop(1, `rgba(${f.color}, 0)`)
+        ctx.fillStyle = g
         ctx.beginPath()
-        ctx.arc(r.x / globalDpr, r.y / globalDpr, 2, 0, Math.PI * 2)
-        ctx.fillStyle = r.color
+        ctx.arc(fx, fy, fr, 0, Math.PI * 2)
         ctx.fill()
       })
 
-      particles.forEach((p) => {
-        ctx.globalAlpha = Math.max(0, p.alpha)
+      // 上升火箭：彗尾 + 亮头
+      rockets.forEach((r) => {
+        ctx.lineCap = 'round'
+        for (let i = 1; i < r.trail.length; i++) {
+          const t0 = r.trail[i - 1]
+          const t1 = r.trail[i]
+          ctx.globalAlpha = Math.max(0, t1.alpha * 0.85)
+          ctx.strokeStyle = 'rgba(255, 225, 170, 0.9)'
+          ctx.lineWidth = 1 + i * 0.12
+          ctx.beginPath()
+          ctx.moveTo(t0.x / globalDpr, t0.y / globalDpr)
+          ctx.lineTo(t1.x / globalDpr, t1.y / globalDpr)
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1
+        ctx.fillStyle = 'rgba(255, 245, 210, 1)'
         ctx.beginPath()
-        ctx.arc(p.x / globalDpr, p.y / globalDpr, 1.5, 0, Math.PI * 2)
-        ctx.fillStyle = p.color
+        ctx.arc(r.x / globalDpr, r.y / globalDpr, 2.2, 0, Math.PI * 2)
+        ctx.fill()
+      })
+
+      // 爆炸粒子：外辉光 + 拖尾光迹 + 内核，并带轻微闪烁
+      particles.forEach((p) => {
+        const twinkle = 0.78 + Math.random() * 0.22
+        const a = Math.max(0, p.alpha * twinkle)
+        const px = p.x / globalDpr
+        const py = p.y / globalDpr
+        // 外辉光
+        ctx.globalAlpha = a * 0.18
+        ctx.fillStyle = `rgb(${p.color})`
+        ctx.beginPath()
+        ctx.arc(px, py, p.size * 2.6, 0, Math.PI * 2)
+        ctx.fill()
+        // 拖尾光迹
+        ctx.globalAlpha = a * 0.7
+        ctx.strokeStyle = `rgb(${p.color})`
+        ctx.lineWidth = p.size
+        ctx.lineCap = 'round'
+        ctx.beginPath()
+        ctx.moveTo(p.px / globalDpr, p.py / globalDpr)
+        ctx.lineTo(px, py)
+        ctx.stroke()
+        // 内核
+        ctx.globalAlpha = a
+        ctx.beginPath()
+        ctx.arc(px, py, p.size, 0, Math.PI * 2)
         ctx.fill()
       })
 
       ctx.globalAlpha = 1
+      ctx.globalCompositeOperation = 'source-over'
       ctx.restore()
     },
     [globalDpr]
@@ -360,7 +438,7 @@ export default function VaporizeTextCycle({
         resetParticles(particlesRef.current)
         setAnimationState('vaporizing')
         if (canvasRef.current) {
-          launchFireworks(canvasRef.current, 5)
+          launchFireworks(canvasRef.current, 5, globalDpr)
         }
       }
       return
@@ -632,7 +710,7 @@ const handleFontChange = ({
   lastFontRef: React.MutableRefObject<string | null>
   canvasRef: React.RefObject<HTMLCanvasElement>
   particlesRef: React.MutableRefObject<Particle[]>
-  fireworksRef?: React.MutableRefObject<{ rockets: FireworkRocket[]; particles: FireworkParticle[] }>
+  fireworksRef?: React.MutableRefObject<{ rockets: FireworkRocket[]; particles: FireworkParticle[]; flashes: FireworkFlash[] }>
   globalDpr: number
   currentTextIndex: number
   framerProps: VaporizeTextCycleProps
@@ -669,7 +747,7 @@ const cleanup = ({
 }: {
   canvasRef: React.RefObject<HTMLCanvasElement>
   particlesRef: React.MutableRefObject<Particle[]>
-  fireworksRef?: React.MutableRefObject<{ rockets: FireworkRocket[]; particles: FireworkParticle[] }>
+  fireworksRef?: React.MutableRefObject<{ rockets: FireworkRocket[]; particles: FireworkParticle[]; flashes: FireworkFlash[] }>
 }) => {
   const canvas = canvasRef.current
   const ctx = canvas?.getContext('2d')
@@ -684,6 +762,7 @@ const cleanup = ({
   if (fireworksRef?.current) {
     fireworksRef.current.rockets = []
     fireworksRef.current.particles = []
+    fireworksRef.current.flashes = []
   }
 }
 
