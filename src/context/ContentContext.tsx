@@ -145,13 +145,15 @@ const loadFromStatic = async (): Promise<SiteContent | null> => {
 const loadFromGitHubApi = async (): Promise<SiteContent | null> => {
   if (!isGitHubReady()) return null
   try {
-    // 关键：URL 加 cache-buster + 完全不发送 If-None-Match header + Cache-Control: no-store + max-age=0
+    // 关键：URL 加 cache-buster + 完全不发送 If-None-Match header + fetch cache: 'no-store'
     //
     // 之前用 If-None-Match: '*'，但 GitHub API 居然把 '*' 当作合法 ETag 匹配 → 返回 304 空 body
     // → 前端 await res.json() 解析失败 → 返回 null → fallback 到 jsDelivr 缓存旧值（coverImg 空）
     // → 用户看到占位图。这是隐藏的"刷新回旧数据"根因之一。
     //
     // 现在彻底不发送 If-None-Match header，让 GitHub 不知道客户端有缓存版本，永远返 200 + 完整 body。
+    // 注意：不能加自定义 Cache-Control header，否则 GitHub API 的 CORS 预检会失败（
+    // Access-Control-Allow-Headers 不包含 cache-control），导致请求被浏览器拦截。
     const url = `https://api.github.com/repos/${githubConfig.repo}/contents/${encodeURI(githubConfig.contentKey)}?ref=${githubConfig.branch}&_t=${Date.now()}`
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 5000)
@@ -159,7 +161,6 @@ const loadFromGitHubApi = async (): Promise<SiteContent | null> => {
       headers: {
         Authorization: `Bearer ${githubConfig.token}`,
         Accept: 'application/vnd.github+json',
-        'Cache-Control': 'no-store, max-age=0',
       },
       cache: 'no-store',
       signal: ctrl.signal,
