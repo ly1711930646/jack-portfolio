@@ -95,7 +95,6 @@ const AdminImage = ({ src, alt, className }: { src: string; alt?: string; classN
       alt={alt || ''}
       className={className}
       onError={handleError}
-      crossOrigin="anonymous"
     />
   )
 }
