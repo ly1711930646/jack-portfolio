@@ -53,6 +53,38 @@ type TextBoundaries = {
   width: number
 }
 
+type FireworkRocket = {
+  x: number
+  y: number
+  targetY: number
+  vx: number
+  vy: number
+  color: string
+  trail: { x: number; y: number; alpha: number }[]
+  exploded: boolean
+  dead: boolean
+}
+
+type FireworkParticle = {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  color: string
+  alpha: number
+  decay: number
+  gravity: number
+}
+
+const FIREWORK_COLORS = [
+  'rgba(255, 215, 0, 1)',   // 金
+  'rgba(255, 77, 77, 1)',   // 红
+  'rgba(77, 255, 77, 1)',   // 绿
+  'rgba(77, 255, 255, 1)',  // 青
+  'rgba(255, 77, 255, 1)',  // 洋红
+  'rgba(255, 255, 255, 1)', // 白
+]
+
 declare global {
   interface HTMLCanvasElement {
     textBoundaries?: TextBoundaries
@@ -86,6 +118,10 @@ export default function VaporizeTextCycle({
   const lastFontRef = useRef<string | null>(null)
   const particlesRef = useRef<Particle[]>([])
   const animationFrameRef = useRef<number | null>(null)
+  const fireworksRef = useRef<{ rockets: FireworkRocket[]; particles: FireworkParticle[] }>({
+    rockets: [],
+    particles: [],
+  })
   const [currentTextIndex, setCurrentTextIndex] = useState(0)
   const [animationState, setAnimationState] = useState<'static' | 'vaporizing' | 'fadingIn' | 'waiting'>('static')
   const [hovered, setHovered] = useState(false)
@@ -189,6 +225,128 @@ export default function VaporizeTextCycle({
     [globalDpr]
   )
 
+  const launchFireworks = useCallback((canvas: HTMLCanvasElement, count = 5) => {
+    const rockets = fireworksRef.current.rockets
+    const w = canvas.width
+    const h = canvas.height
+    for (let i = 0; i < count; i++) {
+      const targetX = w * (0.2 + Math.random() * 0.6)
+      const targetY = h * (0.15 + Math.random() * 0.3)
+      const startX = w * (0.1 + Math.random() * 0.8)
+      const startY = h
+      const duration = 60 + Math.random() * 40
+      const dx = targetX - startX
+      const dy = targetY - startY
+      rockets.push({
+        x: startX,
+        y: startY,
+        targetY,
+        vx: dx / duration,
+        vy: dy / duration,
+        color: FIREWORK_COLORS[(Math.random() * FIREWORK_COLORS.length) | 0],
+        trail: [],
+        exploded: false,
+        dead: false,
+      })
+    }
+  }, [])
+
+  const explodeFirework = useCallback((x: number, y: number, color: string) => {
+    const particles = fireworksRef.current.particles
+    const count = 30 + ((Math.random() * 20) | 0)
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const speed = Math.random() * 4 + 1
+      particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        color,
+        alpha: 1,
+        decay: 0.01 + Math.random() * 0.015,
+        gravity: 0.08,
+      })
+    }
+  }, [])
+
+  const updateFireworks = useCallback(() => {
+    const rockets = fireworksRef.current.rockets
+      const particles = fireworksRef.current.particles
+
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const r = rockets[i]
+        if (r.dead) continue
+
+        r.trail.push({ x: r.x, y: r.y, alpha: 1 })
+        if (r.trail.length > 10) r.trail.shift()
+        r.trail.forEach((t) => {
+          t.alpha -= 0.12
+        })
+
+        r.x += r.vx
+        r.y += r.vy
+        r.vy += 0.06
+
+        if (r.vy >= 0 || r.y <= r.targetY) {
+          explodeFirework(r.x, r.y, r.color)
+          r.exploded = true
+          r.dead = true
+        }
+      }
+
+      fireworksRef.current.rockets = rockets.filter((r) => !r.dead)
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i]
+        p.vy += p.gravity
+        p.x += p.vx
+        p.y += p.vy
+        p.alpha -= p.decay
+        if (p.alpha <= 0) {
+          particles.splice(i, 1)
+        }
+      }
+    },
+    [explodeFirework]
+  )
+
+  const renderFireworks = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      ctx.save()
+      ctx.scale(globalDpr, globalDpr)
+
+      const rockets = fireworksRef.current.rockets
+      const particles = fireworksRef.current.particles
+
+      rockets.forEach((r) => {
+        r.trail.forEach((t) => {
+          if (t.alpha <= 0) return
+          ctx.beginPath()
+          ctx.arc(t.x / globalDpr, t.y / globalDpr, 1.5, 0, Math.PI * 2)
+          ctx.fillStyle = r.color.replace(/[\d.]+\)$/, `${t.alpha})`)
+          ctx.fill()
+        })
+        ctx.beginPath()
+        ctx.arc(r.x / globalDpr, r.y / globalDpr, 2, 0, Math.PI * 2)
+        ctx.fillStyle = r.color
+        ctx.fill()
+      })
+
+      particles.forEach((p) => {
+        ctx.globalAlpha = Math.max(0, p.alpha)
+        ctx.beginPath()
+        ctx.arc(p.x / globalDpr, p.y / globalDpr, 1.5, 0, Math.PI * 2)
+        ctx.fillStyle = p.color
+        ctx.fill()
+      })
+
+      ctx.globalAlpha = 1
+      ctx.restore()
+    },
+    [globalDpr]
+  )
+
   useEffect(() => {
     if (interactive) {
       // 交互模式：
@@ -201,6 +359,9 @@ export default function VaporizeTextCycle({
         fadeOpacityRef.current = 1
         resetParticles(particlesRef.current)
         setAnimationState('vaporizing')
+        if (canvasRef.current) {
+          launchFireworks(canvasRef.current, 5)
+        }
       }
       return
     }
@@ -307,6 +468,9 @@ export default function VaporizeTextCycle({
         }
       }
 
+      updateFireworks()
+      renderFireworks(ctx)
+
       frameId = requestAnimationFrame(animate)
     }
 
@@ -325,6 +489,8 @@ export default function VaporizeTextCycle({
     globalDpr,
     memoizedUpdateParticles,
     memoizedRenderParticles,
+    updateFireworks,
+    renderFireworks,
     animationDurations.FADE_IN_DURATION,
     animationDurations.WAIT_DURATION,
     animationDurations.VAPORIZE_DURATION,
@@ -351,6 +517,7 @@ export default function VaporizeTextCycle({
       lastFontRef,
       canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>,
       particlesRef,
+      fireworksRef,
       globalDpr,
       currentTextIndex,
       framerProps: {
@@ -455,6 +622,7 @@ const handleFontChange = ({
   lastFontRef,
   canvasRef,
   particlesRef,
+  fireworksRef,
   globalDpr,
   currentTextIndex,
   framerProps,
@@ -464,6 +632,7 @@ const handleFontChange = ({
   lastFontRef: React.MutableRefObject<string | null>
   canvasRef: React.RefObject<HTMLCanvasElement>
   particlesRef: React.MutableRefObject<Particle[]>
+  fireworksRef?: React.MutableRefObject<{ rockets: FireworkRocket[]; particles: FireworkParticle[] }>
   globalDpr: number
   currentTextIndex: number
   framerProps: VaporizeTextCycleProps
@@ -473,7 +642,7 @@ const handleFontChange = ({
     lastFontRef.current = currentFont
 
     const timeoutId = setTimeout(() => {
-      cleanup({ canvasRef, particlesRef })
+      cleanup({ canvasRef, particlesRef, fireworksRef })
       renderCanvas({
         framerProps,
         canvasRef,
@@ -486,7 +655,7 @@ const handleFontChange = ({
 
     return () => {
       clearTimeout(timeoutId)
-      cleanup({ canvasRef, particlesRef })
+      cleanup({ canvasRef, particlesRef, fireworksRef })
     }
   }
 
@@ -496,9 +665,11 @@ const handleFontChange = ({
 const cleanup = ({
   canvasRef,
   particlesRef,
+  fireworksRef,
 }: {
   canvasRef: React.RefObject<HTMLCanvasElement>
   particlesRef: React.MutableRefObject<Particle[]>
+  fireworksRef?: React.MutableRefObject<{ rockets: FireworkRocket[]; particles: FireworkParticle[] }>
 }) => {
   const canvas = canvasRef.current
   const ctx = canvas?.getContext('2d')
@@ -509,6 +680,10 @@ const cleanup = ({
 
   if (particlesRef.current) {
     particlesRef.current = []
+  }
+  if (fireworksRef?.current) {
+    fireworksRef.current.rockets = []
+    fireworksRef.current.particles = []
   }
 }
 
