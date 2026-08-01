@@ -138,10 +138,25 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.45, ease: 'easeOut' }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/70 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 sm:p-6 md:p-10 bg-black/70 backdrop-blur-md"
       onClick={triggerHint}
       style={{ willChange: 'opacity', perspective: '1200px' }}
     >
+      <AnimatePresence>
+        {showHint && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="relative z-[60] mb-4 px-5 py-2.5 rounded-full bg-[#1a1a1a]/95 border border-white/10 text-sm text-white/90 shadow-2xl whitespace-nowrap pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            如需关闭弹窗，请点击右上角关闭按钮，谢谢！
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 32, rotateX: -8 }}
         animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
@@ -297,21 +312,6 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
           </motion.div>
         )}
       </motion.div>
-
-      <AnimatePresence>
-        {showHint && (
-          <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute top-6 left-1/2 -translate-x-1/2 z-[60] px-5 py-2.5 rounded-full bg-[#1a1a1a]/95 border border-white/10 text-sm text-white/90 shadow-2xl whitespace-nowrap pointer-events-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            如需关闭弹窗，请点击右上角关闭按钮，谢谢！
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   )
 }
