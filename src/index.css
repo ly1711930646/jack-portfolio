@@ -400,32 +400,17 @@ body.modal-open nav.nav-glass {
   to   { opacity: 0; }
 }
 
-/* 打开：340ms，Apple 风格 ease-out（轻微回弹感，长一些更从容） */
+/* 弹窗动画交由 framer-motion 控制（inline transform/opacity）。
+   此处仅设置变换原点与合成提示，避免 CSS animation 的 fill-mode
+   持续覆盖 framer-motion 写入的 inline transform，导致关闭动画失效。 */
 .modal-shell {
-  transform-origin: top center;
-  animation: modalShellIn 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: top right;
   will-change: transform, opacity;
-}
-
-/* 关闭：420ms，与打开对称的 ease-out，更自然流畅 */
-.modal-shell--closing {
-  animation: modalShellOut 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.modal-backdrop {
-  animation: modalBackdropIn 300ms ease-out both;
-}
-
-.modal-backdrop--closing {
-  animation: modalBackdropOut 360ms ease-out both;
 }
 
 /* 严重动效偏好：禁用弹窗折叠动画 */
 @media (prefers-reduced-motion: reduce) {
-  .modal-shell,
-  .modal-shell--closing,
-  .modal-backdrop,
-  .modal-backdrop--closing {
+  .modal-shell {
     animation: none;
   }
 }
