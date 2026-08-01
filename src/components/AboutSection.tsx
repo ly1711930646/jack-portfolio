@@ -129,7 +129,7 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/88"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/70 backdrop-blur-md"
       onClick={onClose}
       style={{ willChange: 'opacity' }}
     >
