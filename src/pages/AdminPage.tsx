@@ -127,9 +127,9 @@ const GitHubAssetUploader = ({
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState('')
   const [err, setErr] = useState('')
-  if (!isGitHubReady() && !isCosReady()) {
-    return <span className="text-xs text-white/30">（未配置 GitHub / 腾讯云 COS，上传不可用）</span>
-  }
+
+  // 未配置任何图床时仍显示按钮，但禁用并提示用户去配置 token
+  const ready = isGitHubReady() || isCosReady()
   // 实际使用的图床后端：优先 COS，其次 GitHub
   const usingCos = isCosReady()
   const usingGh = isGitHubReady() && !isCosReady()
@@ -155,6 +155,10 @@ const GitHubAssetUploader = ({
     const files = Array.from(e.target.files ?? [])
     e.target.value = ''
     if (!files.length) return
+    if (!ready) {
+      setErr('未配置 GitHub Token / 腾讯云 COS，请在仓库 Settings → Secrets 中配置 GH_TOKEN 后重新部署')
+      return
+    }
 
     // 单文件模式
     if (!multiple) {
@@ -203,12 +207,16 @@ const GitHubAssetUploader = ({
 
   return (
     <div className="mt-2 flex items-center gap-2 flex-wrap">
-      <button type="button" onClick={() => inputRef.current?.click()} disabled={busy}
-        className="text-xs text-[#4A90FF] hover:text-[#5C9CFF] font-medium disabled:opacity-50">
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy || !ready}
+        className="text-xs text-[#4A90FF] hover:text-[#5C9CFF] font-medium disabled:opacity-50"
+      >
         {busy ? (progress || '上传中…') : label}
       </button>
-      <span className={`text-xs ${usingCos ? 'text-green-400/80' : 'text-[#4A90FF]/70'}`}>
-        {usingCos ? '腾讯云 COS' : usingGh ? 'GitHub' : ''}
+      <span className={`text-xs ${usingCos ? 'text-green-400/80' : usingGh ? 'text-[#4A90FF]/70' : 'text-white/30'}`}>
+        {usingCos ? '腾讯云 COS' : usingGh ? 'GitHub' : '未配置上传后端'}
       </span>
       <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handle} multiple={multiple} />
       {err && <span className="text-xs text-red-400">{err}</span>}
