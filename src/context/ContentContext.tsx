@@ -5,19 +5,6 @@ import { contentJsonUrl, githubConfig, migrateLegacyJsdelivrUrls } from '../gith
 
 const STORAGE_KEY = 'jack-portfolio-content'
 
-// 调试用：把加载进度打印到页面上的 #__debug 区域
-const debug = (msg: string) => {
-  console.log('[ContentContext]', msg)
-  try {
-    const w = window as unknown as Record<string, unknown>
-    if (typeof w.__debugLog === 'function') {
-      w.__debugLog(msg)
-    }
-  } catch {
-    /* ignore */
-  }
-}
-
 interface ContentContextType {
   content: SiteContent
   loading: boolean
@@ -137,7 +124,6 @@ const base64ToUtf8 = (base64: string): string => {
 const loadFromStatic = async (): Promise<SiteContent | null> => {
   if (!contentJsonUrl) return null
   try {
-    debug('loadFromStatic start')
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 3000)
     const res = await fetch(`${contentJsonUrl}${contentJsonUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`, { cache: 'no-store', signal: ctrl.signal })
@@ -145,14 +131,12 @@ const loadFromStatic = async (): Promise<SiteContent | null> => {
     if (res.ok) {
       const raw = await res.json()
       if (raw && typeof raw === 'object' && (raw.hero || raw.about || raw.projects || raw.services || raw.marquee)) {
-        debug('loadFromStatic ok')
         return mergeWithDefault(raw)
       }
     }
   } catch {
     /* ignore */
   }
-  debug('loadFromStatic failed')
   return null
 }
 
@@ -161,7 +145,6 @@ const loadFromStatic = async (): Promise<SiteContent | null> => {
 const loadFromGitHubApi = async (): Promise<SiteContent | null> => {
   if (!isGitHubReady()) return null
   try {
-    debug('loadFromGitHubApi start')
     // 关键：URL 加 cache-buster + 完全不发送 If-None-Match header + Cache-Control: no-store + max-age=0
     //
     // 之前用 If-None-Match: '*'，但 GitHub API 居然把 '*' 当作合法 ETag 匹配 → 返回 304 空 body
@@ -186,14 +169,12 @@ const loadFromGitHubApi = async (): Promise<SiteContent | null> => {
       const data = await res.json()
       const raw = data.content ? JSON.parse(base64ToUtf8(data.content)) : null
       if (raw && typeof raw === 'object' && (raw.hero || raw.about || raw.projects || raw.services || raw.marquee)) {
-        debug('loadFromGitHubApi ok')
         return mergeWithDefault(raw)
       }
     }
   } catch {
     /* ignore */
   }
-  debug('loadFromGitHubApi failed')
   return null
 }
 
@@ -214,8 +195,6 @@ const loadFromLocal = (): SiteContent | null => {
 // 3. 本地 localStorage 兜底。
 // 4. 默认值。
 const loadInitial = async (): Promise<SiteContent> => {
-  debug('loadInitial start')
-
   // 1. 优先同源静态，超时 3 秒，首屏秒开
   const staticContent = await loadFromStatic()
   if (staticContent) return staticContent
@@ -275,7 +254,6 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
 
     loadInitial().then((c) => {
       if (cancelled) return
-      debug('loadInitial done, setContent')
       setContent(c)
       setLoading(false)
 
@@ -284,7 +262,6 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
       if (isGitHubReady()) {
         loadFromGitHubApi().then((fresh) => {
           if (cancelled || !fresh) return
-          debug('GitHub API fresh content loaded')
           setContent(fresh)
         })
       }
