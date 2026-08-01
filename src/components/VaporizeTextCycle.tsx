@@ -246,18 +246,20 @@ export default function VaporizeTextCycle({
     const h = canvas.height
     const gravity = 0.16 * dpr
     for (let i = 0; i < count; i++) {
-      const startX = w * (0.15 + Math.random() * 0.7)
+      // 从底部较宽区域发射，覆盖左右两侧
+      const startX = w * (0.05 + Math.random() * 0.9)
       const startY = h
-      // 目标爆点高度：屏幕上方 12%~34%
-      const targetY = h * (0.12 + Math.random() * 0.22)
+      // 爆点高度扩展到屏幕上方 10%~55%，让烟花布满整个页面范围
+      const targetY = h * (0.10 + Math.random() * 0.45)
       // 由能量守恒估算初速度，使火箭恰好在 targetY 附近到达顶点自然炸开
-      const vy0 = -Math.sqrt(Math.max(0, 2 * gravity * (startY - targetY))) * (0.96 + Math.random() * 0.08)
+      const vy0 = -Math.sqrt(Math.max(0, 2 * gravity * (startY - targetY))) * (0.94 + Math.random() * 0.12)
       rockets.push({
         x: startX,
         y: startY,
         px: startX,
         py: startY,
-        vx: (Math.random() - 0.5) * 0.6 * dpr,
+        // 给一点水平漂移/风力，让弧线横跨页面
+        vx: (Math.random() - 0.5) * 1.6 * dpr,
         vy: vy0,
         gravity,
         color: FIREWORK_COLORS[(Math.random() * FIREWORK_COLORS.length) | 0],
@@ -271,7 +273,8 @@ export default function VaporizeTextCycle({
     const { particles, flashes } = fireworksRef.current
     // 爆心瞬间的强光闪
     flashes.push({ x, y, color, alpha: 1, radius: 16 * dpr })
-    const count = 90 + ((Math.random() * 70) | 0)
+    // 火箭数量增多后，单枚粒子数略减，避免总量过多
+    const count = 70 + ((Math.random() * 40) | 0)
     const baseSpeed = (2.4 + Math.random() * 1.6) * dpr
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2
@@ -438,7 +441,9 @@ export default function VaporizeTextCycle({
         resetParticles(particlesRef.current)
         setAnimationState('vaporizing')
         if (canvasRef.current) {
-          launchFireworks(canvasRef.current, 5, globalDpr)
+          // 每次随机 8~12 枚，铺满整个视口但不至于过多
+          const rocketCount = 8 + Math.floor(Math.random() * 5)
+          launchFireworks(canvasRef.current, rocketCount, globalDpr)
         }
       }
       return
