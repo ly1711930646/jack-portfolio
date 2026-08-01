@@ -2,13 +2,37 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/jack-portfolio/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- 禁止浏览器缓存 HTML,避免硬刷后还加载旧版 JS/CSS 导致新改动看不到 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>李杨 -- 3D Creator</title>
+    <script>
+      // 调试辅助：把致命 JS 错误或长时间空白显示出来，便于定位问题
+      window.__pageErrors = []
+      window.onerror = function (msg, url, line, col, err) {
+        window.__pageErrors.push({ type: 'error', msg: msg, url: url, line: line, col: col, stack: err && err.stack })
+        showErrors()
+      }
+      window.addEventListener('unhandledrejection', function (e) {
+        window.__pageErrors.push({ type: 'rejection', reason: String(e.reason), stack: e.reason && e.reason.stack })
+        showErrors()
+      })
+      function showErrors () {
+        var root = document.getElementById('root')
+        if (!root) return
+        root.innerHTML = '<div style="color:#ff6b6b;background:#0c0c0c;padding:24px;font-family:monospace;white-space:pre-wrap;word-break:break-all;"><h2>页面加载出错</h2>' + window.__pageErrors.map(function (e) { return JSON.stringify(e, null, 2) }).join('\n---\n') + '</div>'
+      }
+      // 5 秒后如果 #root 还是空，显示调试信息
+      setTimeout(function () {
+        var root = document.getElementById('root')
+        if (root && !root.innerHTML.trim()) {
+          root.innerHTML = '<div id="__debug" style="color:#fff;background:#0c0c0c;padding:24px;font-family:monospace;white-space:pre-wrap;word-break:break-all;"><h2>调试：页面 5 秒内未渲染</h2>请把完整内容截图给管理员。</div>'
+        }
+      }, 5000)
+    </script>
   </head>
   <body>
     <div id="root"></div>

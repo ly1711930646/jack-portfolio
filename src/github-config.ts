@@ -33,10 +33,10 @@ export const githubConfig: GitHubConfig = {
 // 由 GitHub Pages 直接托管，避免 raw.githubusercontent.com 在部分网络被拦截导致破图。
 export const SITE_BASE = '/jack-portfolio/'
 
-// 站点运行时优先从 GitHub raw 读取最新 content.json（后台保存即同步，无需重新部署）。
-// 同时 content.json 也会随 dist 打包作为兜底（ContentContext 读取失败时使用）。
+// 站点运行时优先从 GitHub API 读取最新 content.json（后台保存即同步，无需重新部署）。
+// GitHub API 不可用时 fallback 到 GitHub Pages 同源静态文件（避免 raw.githubusercontent.com 被拦截）。
 const contentJsonPath = githubConfig.contentKey.replace(/^public\//, '')
-export const contentJsonUrl = `${githubConfig.rawBase}/${contentJsonPath}`
+export const contentJsonUrl = `${SITE_BASE}${contentJsonPath}`
 
 // 把仓库内路径（如 public/assets/uploads/x.png）转成站点可访问的相对路径（assets/uploads/x.png）
 export const repoPathToServed = (repoPath: string): string => {
