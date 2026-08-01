@@ -34,41 +34,60 @@ const DecorativeImage = ({
 
 const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; onClose: () => void }) => {
   const modalRef = useRef<HTMLDivElement>(null)
+  const rafRef = useRef<number | null>(null)
+  const mouseRef = useRef({ x: 0, y: 0 })
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.07, delayChildren: 0.08 },
+      transition: { staggerChildren: 0.05, delayChildren: 0.04 },
     },
   }
 
   const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 18, scale: 0.98 },
+    hidden: { opacity: 0, y: 14 },
     visible: {
       opacity: 1,
       y: 0,
-      scale: 1,
-      transition: { type: 'spring', stiffness: 320, damping: 22 },
+      transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
     },
   }
 
   useEffect(() => {
+    document.body.classList.add('modal-open')
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
+      document.body.classList.remove('modal-open')
       document.body.style.overflow = prev
     }
   }, [])
 
-  // 鼠标局部聚光灯：只让光标所在区域亮起
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  // 鼠标局部聚光灯：使用 requestAnimationFrame 节流，避免每帧都 setProperty 触发重绘
+  useEffect(() => {
     const el = modalRef.current
     if (!el) return
-    const rect = el.getBoundingClientRect()
-    el.style.setProperty('--mx', `${e.clientX - rect.left}px`)
-    el.style.setProperty('--my', `${e.clientY - rect.top}px`)
-  }
+    let framePending = false
+    const update = () => {
+      framePending = false
+      const rect = el.getBoundingClientRect()
+      el.style.setProperty('--mx', `${mouseRef.current.x - rect.left}px`)
+      el.style.setProperty('--my', `${mouseRef.current.y - rect.top}px`)
+    }
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY }
+      if (!framePending) {
+        framePending = true
+        rafRef.current = requestAnimationFrame(update)
+      }
+    }
+    el.addEventListener('mousemove', handleMouseMove, { passive: true })
+    return () => {
+      el.removeEventListener('mousemove', handleMouseMove)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
+  }, [])
 
   const InfoRow = ({
     label,
@@ -109,18 +128,17 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/80 backdrop-blur-md"
+      transition={{ duration: 0.22 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/88"
       onClick={onClose}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.82, y: 30 }}
+        initial={{ opacity: 0, scale: 0.94, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.92, y: 20 }}
-        transition={{ type: 'spring', stiffness: 240, damping: 16, mass: 0.8 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
         ref={modalRef}
-        onMouseMove={handleMouseMove}
-        className="relative w-full max-w-4xl xl:max-w-5xl bg-[#0f0f0f] border border-white/[0.06] rounded-[2rem] shadow-2xl overflow-hidden max-h-[92vh]"
+        className="relative w-full max-w-4xl xl:max-w-5xl bg-[#0f0f0f] border border-white/[0.06] rounded-[2rem] shadow-2xl overflow-hidden max-h-[92vh] modal-shell"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 跟随鼠标的边框光晕 */}
@@ -230,22 +248,28 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
             </div>
 
             <div className="relative">
-              {/* Timeline dashed line */}
-              <div className="absolute top-[15px] left-0 right-0 h-0 border-t border-dashed border-[#4A90FF]/40 hidden md:block" />
+              {/* Timeline dashed line：用 gradient 替代 border-dashed，减少渲染开销 */}
+              <div
+                className="absolute top-[15px] left-0 right-0 h-px hidden md:block"
+                style={{
+                  backgroundImage: 'linear-gradient(to right, rgba(74,144,255,0.4) 50%, transparent 50%)',
+                  backgroundSize: '12px 1px',
+                }}
+              />
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4">
                 {(profile.workExperience || []).slice(0, 3).map((job, i) => (
                   <div key={i} className="relative pt-8">
-                    {/* Dot: third one highlighted (white ring + blue center), others default */}
-                    {i === 2 ? (
-                      <div className="hidden md:flex absolute top-[8px] left-0 w-3.5 h-3.5 rounded-full border-2 border-white bg-transparent items-center justify-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#4A90FF]" />
-                      </div>
-                    ) : (
-                      <div className="hidden md:flex absolute top-[8px] left-0 w-3.5 h-3.5 rounded-full bg-[#4A90FF] shadow-[0_0_12px_rgba(74,144,255,0.5)] items-center justify-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#0f0f0f]" />
-                      </div>
-                    )}
+                    {/* Dot：用单层 div + box-shadow 替代嵌套结构，减少 DOM 节点 */}
+                    <div
+                      className="hidden md:block absolute top-[8px] left-0 w-3.5 h-3.5 rounded-full"
+                      style={{
+                        background: i === 2 ? '#4A90FF' : '#0f0f0f',
+                        boxShadow: i === 2
+                          ? '0 0 0 2px rgba(255,255,255,0.9), 0 0 10px rgba(74,144,255,0.5)'
+                          : '0 0 0 2px rgba(74,144,255,0.9), 0 0 10px rgba(74,144,255,0.35)',
+                      }}
+                    />
 
                     <div className="md:pl-1">
                       <span className="block text-xs font-medium text-[#4A90FF]/90 mb-2">{job.period}</span>
