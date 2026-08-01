@@ -404,7 +404,7 @@ body.modal-open nav.nav-glass {
    此处仅设置变换原点与合成提示，避免 CSS animation 的 fill-mode
    持续覆盖 framer-motion 写入的 inline transform，导致关闭动画失效。 */
 .modal-shell {
-  transform-origin: top right;
+  transform-origin: center right;
   will-change: transform, opacity;
 }
 

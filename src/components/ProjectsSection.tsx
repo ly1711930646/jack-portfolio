@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowUp, RefreshCw } from 'lucide-react'
 import LiveProjectButton from './LiveProjectButton'
 import ProjectModal from './ProjectModal'
@@ -778,7 +778,15 @@ const ProjectsSection = () => {
         </motion.button>
       </div>
 
-      <ProjectModal project={activeProject} onClose={handleCloseModal} />
+      <AnimatePresence>
+        {activeProject && (
+          <ProjectModal
+            key={activeProject.number}
+            project={activeProject}
+            onClose={handleCloseModal}
+          />
+        )}
+      </AnimatePresence>
     </section>
   )
 }

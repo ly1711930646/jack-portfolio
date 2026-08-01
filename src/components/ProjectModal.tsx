@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import type { ProjectItem } from '../content/siteContent'
 import { SmartImage } from './SmartImage'
 
 interface ProjectModalProps {
-  project: ProjectItem | null
+  project: ProjectItem
   onClose: () => void
 }
 
@@ -39,24 +40,10 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [zoom, setZoom] = useState(0.3) // 国内电商默认 30% 预览
   const [imgHeights, setImgHeights] = useState<number[]>([]) // 每张图 onLoad 时的 clientHeight（未 scale）
-  const [isClosing, setIsClosing] = useState(false) // 关闭动画进行中（驱动 className）
-  const isClosingRef = useRef(false) // 跨闭包共享，避免键盘事件读到过期 isClosing
+  const [shakeTick, setShakeTick] = useState(0) // 窗口抖动计数
   const onCloseRef = useRef(onClose) // 父组件频繁重渲染会创建新的 onClose，用 ref 保持引用稳定
   const prevProjectRef = useRef<ProjectItem | null>(null)
-  const showZoomBar = !!project && isDomesticEcommerce(project)
-
-  // 关闭动画时长（与 index.css 中的 modalShellOut 300ms 对齐）
-  const CLOSE_ANIM_MS = 420
-
-  // 触发关闭动画；动画结束后再真正调用 onClose 让父组件卸载 modal
-  const requestClose = () => {
-    if (isClosingRef.current) return
-    isClosingRef.current = true
-    setIsClosing(true)
-    window.setTimeout(() => {
-      onCloseRef.current()
-    }, CLOSE_ANIM_MS)
-  }
+  const showZoomBar = isDomesticEcommerce(project)
 
   // 同步更新 onCloseRef，但不用它触发 useEffect 重执行
   useEffect(() => {
@@ -68,6 +55,11 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
   const zoomIn = () => setZoom((z) => clampZoom(+(z + ZOOM_STEP).toFixed(2)))
   const zoomOut = () => setZoom((z) => clampZoom(+(z - ZOOM_STEP).toFixed(2)))
   const zoomReset = () => setZoom(1)
+
+  // 触发窗口抖动反馈（点击遮罩/按 Escape 时）
+  const triggerShake = () => {
+    setShakeTick((t) => (t >= 1000 ? 1 : t + 1))
+  }
 
   // 图片加载后记录其布局高度，用于在 zoom 变化时同步 wrapper 高度，
   // 避免 transform: scale 视觉缩小但 layout 不变导致下方留白仍可滚动。
@@ -86,9 +78,22 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
     })
   }
 
+  // 弹窗外壳动画：shakeTick 变化时触发水平抖动
+  const shellAnimate = useMemo(
+    () => ({
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      rotateX: 0,
+      rotateY: 0,
+      x: shakeTick > 0 ? [0, -12, 12, -9, 9, -5, 5, -2, 2, 0] : 0,
+    }),
+    [shakeTick],
+  )
+
   useEffect(() => {
     // 弹窗关闭（project 变 null）时，重置"上一个项目"引用，
-    // 这样再次打开同一个项目时 isNewProject 才会为 true，从而重置关闭状态。
+    // 这样再次打开同一个项目时 isNewProject 才会为 true，从而重置弹窗内部状态。
     if (!project) {
       prevProjectRef.current = null
       return
@@ -102,10 +107,7 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
       setCurrentIndex(0)
       setZoom(0.3)
       setImgHeights([])
-      // 重新打开时务必复位关闭状态，否则 isClosingRef 残留 true 会让
-      // 后续 requestClose 直接 return，表现为"关闭后再点按钮无反应"。
-      setIsClosing(false)
-      isClosingRef.current = false
+      setShakeTick(0)
     }
 
     // 打开弹窗时通过 body class 统一隐藏顶部导航栏和右下角返回顶部按钮
@@ -113,10 +115,9 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isClosingRef.current) return
-        isClosingRef.current = true
-        setIsClosing(true)
-        window.setTimeout(() => onCloseRef.current(), CLOSE_ANIM_MS)
+        e.preventDefault()
+        triggerShake()
+        return
       }
       // 仅「国内电商」类目下：快捷键 +/-/0 控制缩放
       if (showZoomBar) {
@@ -159,7 +160,7 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
 
   useEffect(() => {
     const el = scrollRef.current
-    if (!el || !project) return
+    if (!el) return
 
     const handleScroll = () => {
       const items = Array.from(el.querySelectorAll<HTMLElement>('[data-slide]'))
@@ -180,28 +181,55 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
 
     el.addEventListener('scroll', handleScroll, { passive: true })
     return () => el.removeEventListener('scroll', handleScroll)
-  }, [project])
-
-  if (!project) return null
+  }, [])
 
   const images = project.images && project.images.length > 0 ? project.images : []
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 md:p-8"
       role="dialog"
       aria-modal="true"
       aria-label={`${project.name} 作品详情`}
+      style={{ willChange: 'opacity' }}
     >
-      {/* 背景遮罩 */}
+      {/* 背景遮罩：点击只抖动窗口，不关闭 */}
       <div
-        className={`absolute inset-0 bg-black/85 backdrop-blur-sm modal-backdrop${isClosing ? ' modal-backdrop--closing' : ''}`}
-        onClick={requestClose}
+        className="absolute inset-0 bg-black/85 backdrop-blur-sm"
+        onClick={triggerShake}
         aria-hidden="true"
       />
 
-      {/* 固定弹窗 */}
-      <div className={`modal-shell relative z-10 flex h-full max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[24px] sm:rounded-[32px] md:rounded-[40px] border border-white/10 bg-[#0C0C0C] shadow-2xl${isClosing ? ' modal-shell--closing' : ''}`}>
+      {/* 弹窗主体：打开时平滑展开，关闭时像书页向右侧折叠收起 */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.88, y: 30, rotateX: -10 }}
+        animate={shellAnimate}
+        exit={{
+          opacity: [1, 0.95, 0.78, 0],
+          scale: [1, 0.92, 0.46, 0.16],
+          rotateY: [0, -26, -84, -102],
+          rotateX: [0, 4, 8, 10],
+        }}
+        transition={{
+          opacity: { duration: 0.4, ease: 'easeOut' },
+          scale: { duration: 0.72, times: [0, 0.14, 0.55, 1], ease: [0.25, 0.46, 0.45, 0.94] },
+          rotateY: { duration: 0.72, times: [0, 0.14, 0.55, 1], ease: [0.25, 0.46, 0.45, 0.94] },
+          rotateX: { duration: 0.72, times: [0, 0.14, 0.55, 1], ease: [0.25, 0.46, 0.45, 0.94] },
+          y: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+          x: { duration: 0.42, ease: 'easeInOut' },
+        }}
+        className="modal-shell relative z-10 flex h-full max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[24px] sm:rounded-[32px] md:rounded-[40px] border border-white/10 bg-[#0C0C0C] shadow-2xl"
+        style={{
+          willChange: 'transform, opacity',
+          transformOrigin: 'center right',
+          transformStyle: 'preserve-3d',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* 顶部信息 */}
         <div className="flex shrink-0 items-center justify-between px-5 sm:px-8 md:px-10 py-4 sm:py-5 border-b border-white/10 bg-[#0C0C0C]">
           <div className="flex items-center gap-4 sm:gap-6">
@@ -229,7 +257,7 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
             )}
             <button
               type="button"
-              onClick={requestClose}
+              onClick={onClose}
               className="shrink-0 w-10 h-10 rounded-full border border-white/20 text-[#D7E2EA] hover:bg-white/10 hover:rotate-90 active:scale-90 flex items-center justify-center transition-all duration-300 ease-out"
               aria-label="关闭"
             >
@@ -344,8 +372,8 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
