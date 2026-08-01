@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import FadeIn from './FadeIn'
 import AnimatedText from './AnimatedText'
@@ -36,6 +36,14 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
   const modalRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number | null>(null)
   const mouseRef = useRef({ x: 0, y: 0 })
+  const hintTimeoutRef = useRef<number | null>(null)
+  const [showHint, setShowHint] = useState(false)
+
+  const triggerHint = () => {
+    setShowHint(true)
+    if (hintTimeoutRef.current) window.clearTimeout(hintTimeoutRef.current)
+    hintTimeoutRef.current = window.setTimeout(() => setShowHint(false), 2500)
+  }
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -61,6 +69,7 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
     return () => {
       document.body.classList.remove('modal-open')
       document.body.style.overflow = prev
+      if (hintTimeoutRef.current) window.clearTimeout(hintTimeoutRef.current)
     }
   }, [])
 
@@ -130,7 +139,7 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/70 backdrop-blur-md"
-      onClick={onClose}
+      onClick={triggerHint}
       style={{ willChange: 'opacity' }}
     >
       <motion.div
@@ -288,6 +297,21 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
           </motion.div>
         )}
       </motion.div>
+
+      <AnimatePresence>
+        {showHint && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="absolute top-6 left-1/2 -translate-x-1/2 z-[60] px-5 py-2.5 rounded-full bg-[#1a1a1a]/95 border border-white/10 text-sm text-white/90 shadow-2xl whitespace-nowrap pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            如需关闭弹窗，请点击右上角关闭按钮，谢谢！
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
