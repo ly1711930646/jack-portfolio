@@ -10,7 +10,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>李杨 -- 3D Creator</title>
     <script>
-      // 调试辅助：把致命 JS 错误或长时间空白显示出来，便于定位问题
+      // 把致命 JS 错误显示出来，便于用户第一时间反馈
       window.__pageErrors = []
       window.onerror = function (msg, url, line, col, err) {
         window.__pageErrors.push({ type: 'error', msg: msg, url: url, line: line, col: col, stack: err && err.stack })
@@ -25,26 +25,6 @@
         if (!root) return
         root.innerHTML = '<div style="color:#ff6b6b;background:#0c0c0c;padding:24px;font-family:monospace;white-space:pre-wrap;word-break:break-all;"><h2>页面加载出错</h2>' + window.__pageErrors.map(function (e) { return JSON.stringify(e, null, 2) }).join('\n---\n') + '</div>'
       }
-      // 15 秒后如果 #root 还是空，显示调试信息
-      window.__debugLog = function (msg) {
-        console.log('[page debug]', msg)
-        var root = document.getElementById('root')
-        if (!root) return
-        var d = document.getElementById('__debug')
-        if (!d) {
-          d = document.createElement('div')
-          d.id = '__debug'
-          d.style.cssText = 'color:#fff;background:#0c0c0c;padding:24px;font-family:monospace;white-space:pre-wrap;word-break:break-all;'
-          root.appendChild(d)
-        }
-        d.innerHTML += '<div>' + new Date().toLocaleTimeString() + ' ' + msg + '</div>'
-      }
-      setTimeout(function () {
-        var root = document.getElementById('root')
-        if (root && !root.innerHTML.trim()) {
-          root.innerHTML = '<div id="__debug" style="color:#fff;background:#0c0c0c;padding:24px;font-family:monospace;white-space:pre-wrap;word-break:break-all;"><h2>调试：页面 15 秒内未渲染</h2>JS 可能未执行或 React 未挂载。请把完整内容截图给管理员。</div>'
-        }
-      }, 15000)
     </script>
   </head>
   <body>
