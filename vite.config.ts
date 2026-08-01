@@ -62,8 +62,10 @@ const contentFileStorage = {
 }
 
 export default defineConfig({
-  // 相对 base：让构建产物（资源/数据）使用相对路径，
-  // 在 GitHub Pages 的子路径（/<repo>/）下也能正确加载。
-  base: './',
+  // 生产环境部署到 GitHub Pages 的子路径 /jack-portfolio/，必须用绝对 base，
+  // 否则 /admin 等子路由经 404.html(SPA 兜底) 回退时，相对资源会解析成
+  // /jack-portfolio/admin/assets/... 而 404（空白页）。
+  // 开发环境用 '/'，本地直接 http://localhost:5173 访问。
+  base: process.env.NODE_ENV === 'production' ? '/jack-portfolio/' : '/',
   plugins: [contentFileStorage],
 })

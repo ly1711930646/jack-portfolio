@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { defaultContent, type SiteContent, type TabId } from '../content/siteContent'
-import { isGitHubReady, putContentJson } from '../lib/githubClient'
-import { contentJsonUrl } from '../github-config'
+import { isGitHubReady, putContentJson, deleteAsset } from '../lib/githubClient'
+import { contentJsonUrl, githubConfig, migrateLegacyJsdelivrUrls } from '../github-config'
 
 const STORAGE_KEY = 'jack-portfolio-content'
 
@@ -15,11 +15,18 @@ interface ContentContextType {
   updateField: <K extends keyof SiteContent>(section: K, field: keyof SiteContent[K], value: unknown) => void
   setFullContent: (value: SiteContent) => void
   resetContent: () => void
+  saveContent: (value: SiteContent) => Promise<boolean>
+  saveStatus: 'idle' | 'saving' | 'success' | 'error'
+  saveError: string
+  clearSaveStatus: () => void
 }
 
 const ContentContext = createContext<ContentContextType | null>(null)
 
-export const mergeWithDefault = (saved: Partial<SiteContent>): SiteContent => {
+export const mergeWithDefault = (rawSaved: Partial<SiteContent>): SiteContent => {
+  // 先把 content.json 里残留的旧 jsDelivr 域名（cdn.jsdelivr.net / 国内镜像）迁到 raw 直连，
+  // 避免第三方 CDN 不稳定导致图片失效。
+  const saved = migrateLegacyJsdelivrUrls(rawSaved)
   // 清理已废弃的 legacy 字段，避免旧数据污染当前结构
   const cleaned: Partial<SiteContent> = { ...saved }
   // @ts-expect-error contact 字段已移除，旧备份中可能残留
@@ -76,48 +83,135 @@ const persistLocal = (content: SiteContent) => {
   }
 }
 
-// 持久化：配置 GitHub 时写回仓库（保存即同步全网）；否则回退到 /api/content（dev 用），同时写本地缓存
-const persistServer = (content: SiteContent) => {
-  persistLocal(content)
+// 持久化核心：写回 GitHub 仓库（保存即同步全网）或 dev 服务端；返回是否成功
+// 关键：本地兜底 localStorage 只在「云端写入成功」后才写，保证「本地副本永远不比云端新」。
+// 否则一旦 GitHub 写失败（限流/网络抖动），本地会存一份比云端更旧的失败副本，
+// 下次刷新就会展示本地旧数据而非云端真实数据。
+const doPersist = async (content: SiteContent): Promise<boolean> => {
   if (isGitHubReady()) {
-    putContentJson(content).catch(() => {
-      /* 云端写入失败不影响本地缓存 */
-    })
-  } else {
-    fetch('/api/content', {
+    try {
+      await putContentJson(content)
+      persistLocal(content)
+      return true
+    } catch {
+      return false
+    }
+  }
+  try {
+    await fetch('/api/content', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(content),
-    }).catch(() => {
-      /* 服务端不可用时静默失败，本地缓存仍在 */
     })
+    persistLocal(content)
+    return true
+  } catch {
+    return false
   }
 }
 
-// 加载优先级：云端 COS > dev 服务端文件 > 静态烘焙文件（Pages 等纯静态托管）> 本地缓存 > 默认值
-const loadInitial = async (): Promise<SiteContent> => {
-  // 最高优先级：GitHub 仓库上的 content.json（配置后保存即同步，无需重新打包）
-  if (contentJsonUrl) {
-    try {
-      const ctrl = new AbortController()
-      const timer = setTimeout(() => ctrl.abort(), 4000)
-      const res = await fetch(contentJsonUrl, { cache: 'no-cache', signal: ctrl.signal })
-      clearTimeout(timer)
-      if (res.ok) {
-        const raw = await res.json()
-        if (raw && typeof raw === 'object' && (raw.hero || raw.about || raw.projects || raw.services || raw.marquee)) {
-          return mergeWithDefault(raw)
-        }
+// 将 GitHub API 返回的 base64 内容解码为 UTF-8 字符串
+const base64ToUtf8 = (base64: string): string => {
+  const bin = atob(base64.replace(/\s/g, ''))
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return new TextDecoder().decode(bytes)
+}
+
+// 从 jsDelivr 加载 content.json（国内可直连，但可能有 CDN 缓存）。
+// 失败时不抛错，由调用方决定回退策略。
+const loadFromJsdelivr = async (): Promise<SiteContent | null> => {
+  if (!contentJsonUrl) return null
+  try {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 6000)
+    // cache: 'no-store' 强制绕过浏览器缓存；URL 加 _t= 进一步让 jsDelivr 边缘走不同 cache key
+    const res = await fetch(`${contentJsonUrl}${contentJsonUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`, { cache: 'no-store', signal: ctrl.signal })
+    clearTimeout(timer)
+    if (res.ok) {
+      const raw = await res.json()
+      if (raw && typeof raw === 'object' && (raw.hero || raw.about || raw.projects || raw.services || raw.marquee)) {
+        return mergeWithDefault(raw)
       }
-    } catch {
-      /* GitHub 不可用时（如国内被墙）走兜底 */
     }
+  } catch {
+    /* ignore */
   }
+  return null
+}
+
+// 从 GitHub API 直接读取 content.json（不走 CDN，无缓存问题，最权威）。
+// 需要配置 token，作为第一优先加载源。
+const loadFromGitHubApi = async (): Promise<SiteContent | null> => {
+  if (!isGitHubReady()) return null
+  try {
+    // 关键：URL 加 cache-buster + 完全不发送 If-None-Match header + Cache-Control: no-store + max-age=0
+    //
+    // 之前用 If-None-Match: '*'，但 GitHub API 居然把 '*' 当作合法 ETag 匹配 → 返回 304 空 body
+    // → 前端 await res.json() 解析失败 → 返回 null → fallback 到 jsDelivr 缓存旧值（coverImg 空）
+    // → 用户看到占位图。这是隐藏的"刷新回旧数据"根因之一。
+    //
+    // 现在彻底不发送 If-None-Match header，让 GitHub 不知道客户端有缓存版本，永远返 200 + 完整 body。
+    const url = `https://api.github.com/repos/${githubConfig.repo}/contents/${encodeURI(githubConfig.contentKey)}?ref=${githubConfig.branch}&_t=${Date.now()}`
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 8000)
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${githubConfig.token}`,
+        Accept: 'application/vnd.github+json',
+        'Cache-Control': 'no-store, max-age=0',
+      },
+      cache: 'no-store',
+      signal: ctrl.signal,
+    })
+    clearTimeout(timer)
+    if (res.ok) {
+      const data = await res.json()
+      const raw = data.content ? JSON.parse(base64ToUtf8(data.content)) : null
+      if (raw && typeof raw === 'object' && (raw.hero || raw.about || raw.projects || raw.services || raw.marquee)) {
+        return mergeWithDefault(raw)
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+// 读取本地兜底（仅在云端/服务端全部不可用时使用，避免展示 CDN 旧缓存）
+const loadFromLocal = (): SiteContent | null => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) return mergeWithDefault(JSON.parse(saved))
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+// 加载优先级（GitHub 模式）：GitHub API（无缓存、最权威）> 本地兜底 > jsDelivr（有 CDN 旧缓存风险）> dev 服务端 > 静态烘焙文件 > 默认值
+// 关键：本地兜底排在 jsDelivr 之前。本地副本只会在云端写入成功后才更新（见 doPersist），
+// 因此一定比 jsDelivr 的 CDN 边缘缓存更新、更可信；用本地兜底可避免 GitHub API 偶发失败
+// 时回退到 jsDelivr 的旧缓存内容（刷新"变旧数据"的隐藏根因之一）。
+const loadInitial = async (): Promise<SiteContent> => {
+  if (isGitHubReady()) {
+    const github = await loadFromGitHubApi()
+    if (github) return github
+
+    const local = loadFromLocal()
+    if (local) return local
+
+    const jsdelivr = await loadFromJsdelivr()
+    if (jsdelivr) return jsdelivr
+
+    return defaultContent
+  }
+
+  // 非 GitHub 模式（dev / 静态托管）
   try {
     const res = await fetch('/api/content')
     if (res.ok) {
       const raw = await res.json()
-      // 只有服务端确有实质内容时才以它为准，避免空的 {} 覆盖本地已有数据
       if (raw && typeof raw === 'object' && (raw.hero || raw.about || raw.projects || raw.services || raw.marquee)) {
         return mergeWithDefault(raw)
       }
@@ -126,7 +220,6 @@ const loadInitial = async (): Promise<SiteContent> => {
     /* 服务端不可用时走兜底 */
   }
   try {
-    // 纯静态托管（如 GitHub Pages）没有 /api/content，读取构建时烘焙进 dist 的静态文件
     const staticRes = await fetch(`${import.meta.env.BASE_URL}data/content.json`, { cache: 'no-cache' })
     if (staticRes.ok) {
       const raw = await staticRes.json()
@@ -137,47 +230,43 @@ const loadInitial = async (): Promise<SiteContent> => {
   } catch {
     /* 静态文件不可用走兜底 */
   }
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) return mergeWithDefault(JSON.parse(saved))
-  } catch {
-    /* ignore */
-  }
+  const local = loadFromLocal()
+  if (local) return local
   return defaultContent
 }
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
-  // 先用本地缓存做同步初始化，避免首屏闪白
-  const [content, setContent] = useState<SiteContent>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) return mergeWithDefault(JSON.parse(saved))
-    } catch {
-      /* ignore */
-    }
-    return defaultContent
-  })
+  // 首屏用 defaultContent 渲染（旧 localStorage 可能含 ProjectItem 等接口变更前的旧字段，
+  // 例如没有 coverImg 的旧项目结构，会让用户刷新瞬间看到占位图）。
+  // 权威源永远是 GitHub API → jsDelivr → localStorage 兜底，由下面 useEffect 异步加载。
+  const [content, setContent] = useState<SiteContent>(defaultContent)
   const [loading, setLoading] = useState(true)
   const [showProfile, setShowProfile] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
+  const [saveError, setSaveError] = useState<string>('')
 
   useEffect(() => {
     let cancelled = false
+    // 启动超时保护：如果 8 秒内还没从主源（GitHub API / 服务端）拿到数据，
+    // 兜底用本地 localStorage（最近一次成功保存的快照），避免极慢网络下看到空白默认内容。
+    // 注意：这里只回退到本地兜底，不会去碰 jsDelivr CDN，避免展示 CDN 旧缓存。
+    const fallbackTimer = setTimeout(() => {
+      if (cancelled) return
+      const local = loadFromLocal()
+      if (local) setContent(local)
+    }, 8000)
+
     loadInitial().then((c) => {
-      if (!cancelled) {
-        setContent(c)
-        setLoading(false)
-      }
+      if (cancelled) return
+      clearTimeout(fallbackTimer)
+      setContent(c)
+      setLoading(false)
     })
     return () => {
       cancelled = true
+      clearTimeout(fallbackTimer)
     }
   }, [])
-
-  // 内容变化时（含首次加载完成后）→ 持久化到服务端 + 本地
-  useEffect(() => {
-    if (loading) return
-    persistServer(content)
-  }, [content, loading])
 
   const updateSection = <K extends keyof SiteContent>(section: K, value: SiteContent[K]) => {
     setContent((prev) => ({ ...prev, [section]: value }))
@@ -198,17 +287,113 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
     setContent(value)
   }
 
+  // 用户主动保存：写入并弹成功/失败提示。
+  // 保存成功后主动调 GitHub API 重新拉取最新数据 → setContent,
+  // 保证本地 content 永远是 GitHub API 返回的真实数据(避免 jsDelivr CDN 缓存延迟/限流导致显示老数据)。
+  // 收集 content 中所有指向本仓库 uploads 的图片/视频 URL（用于删除同步）。
+  const collectAssetUrls = (obj: unknown, acc: Set<string> = new Set()): Set<string> => {
+    const rawPrefix = `${githubConfig.rawBase}/public/assets/uploads/`
+    const walk = (v: unknown) => {
+      if (typeof v === 'string') {
+        // 收集所有指向本仓库 uploads 的资源：同源绝对路径（/jack-portfolio/assets/uploads/X）、
+        // 站点相对路径（/assets/uploads/X / assets/uploads/X）以及旧 raw 直连。
+        if (
+          v.includes('/assets/uploads/') ||
+          v.startsWith('assets/uploads/') ||
+          v.startsWith(rawPrefix)
+        ) {
+          acc.add(v)
+        }
+      } else if (Array.isArray(v)) {
+        v.forEach(walk)
+      } else if (v && typeof v === 'object') {
+        Object.values(v).forEach(walk)
+      }
+    }
+    walk(obj)
+    return acc
+  }
+
+  const saveContent = async (value: SiteContent): Promise<boolean> => {
+    const prevContent = content // 保存前的旧内容，用于比对被移除的资源
+    setContent(value)
+    setSaveStatus('saving')
+    // 删除同步：找出本次被移除（不再被引用）的图片/视频 URL，
+    // 并从 GitHub 仓库删除对应文件，避免仓库空间被无效图片占用。
+    try {
+      const prevUrls = collectAssetUrls(prevContent)
+      const nextUrls = collectAssetUrls(value)
+      const removed = [...prevUrls].filter((u) => !nextUrls.has(u))
+      if (removed.length) {
+        await Promise.all(removed.map((u) => deleteAsset(u).catch(() => {})))
+      }
+    } catch {
+      /* 删除同步失败不影响主保存流程 */
+    }
+    const ok = await doPersist(value)
+    if (ok) {
+      setSaveStatus('success')
+      setSaveError('')
+      // 主动从 GitHub API 拉最新数据,覆盖本地 content。
+      // 这样下次 AdminPage useEffect 同步 draft 时,draft 一定是 GitHub 源真实值。
+      try {
+        const fresh = await loadFromGitHubApi()
+        if (fresh) setContent(fresh)
+      } catch {
+        /* 拉取失败不影响"保存成功"提示,下次刷新会再尝试 */
+      }
+    } else {
+      setSaveStatus('error')
+      setSaveError('保存到 GitHub 失败，请检查网络或重新加载页面后再试')
+    }
+    return ok
+  }
+
+  const clearSaveStatus = () => {
+    setSaveStatus('idle')
+    setSaveError('')
+  }
+
   const resetContent = () => {
     setContent(defaultContent)
-    persistServer(defaultContent)
+    doPersist(defaultContent)
   }
 
   const openProfile = () => setShowProfile(true)
   const closeProfile = () => setShowProfile(false)
 
+  // 保存成功/失败提示 3 秒后自动消失
+  useEffect(() => {
+    if (saveStatus === 'success' || saveStatus === 'error') {
+      const t = setTimeout(() => clearSaveStatus(), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [saveStatus])
+
   return (
-    <ContentContext.Provider value={{ content, loading, showProfile, openProfile, closeProfile, updateSection, updateField, setFullContent, resetContent }}>
-      {children}
+    <ContentContext.Provider value={{ content, loading, showProfile, openProfile, closeProfile, updateSection, updateField, setFullContent, resetContent, saveContent, saveStatus, saveError, clearSaveStatus }}>
+      {loading ? (
+        // 加载占位：避免首屏渲染 defaultContent 导致内容闪烁（例如默认 bannerText 是
+        // "Every Match Feels Better with Wanbo"，用户刷新时会先看到 Wanbo 文案 1-2 秒，
+        // 然后才切换到真实 portfolio 内容）。统一改成 loading 占位直到 GitHub API 拿到数据。
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label="加载中"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0C0C0C] text-[#D7E2EA]"
+        >
+          <div className="flex items-center gap-3">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#D7E2EA] animate-pulse" style={{ animationDelay: '0ms' }} />
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#D7E2EA] animate-pulse" style={{ animationDelay: '180ms' }} />
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#D7E2EA] animate-pulse" style={{ animationDelay: '360ms' }} />
+          </div>
+          <p className="mt-5 text-xs sm:text-sm tracking-[0.3em] uppercase text-[#D7E2EA]/55">
+            Loading
+          </p>
+        </div>
+      ) : (
+        children
+      )}
     </ContentContext.Provider>
   )
 }

@@ -5,6 +5,7 @@ import AnimatedText from './AnimatedText'
 import ContactButton from './ContactButton'
 import Magnet from './Magnet'
 import { useContent } from '../context/ContentContext'
+import { SmartImage } from './SmartImage'
 import type { AboutContent } from '../content/siteContent'
 
 const DecorativeImage = ({
@@ -26,7 +27,7 @@ const DecorativeImage = ({
     className={className}
   >
     <Magnet padding={100} strength={6} activeTransition="transform 0.2s ease-out" inactiveTransition="transform 0.5s ease-out">
-      <img src={src} alt="" />
+      <SmartImage src={src} alt="" />
     </Magnet>
   </motion.div>
 )
@@ -147,7 +148,7 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
           {/* Left: photo card */}
           <motion.div variants={itemVariants} className="w-full md:w-[34%] md:min-h-[440px] lg:min-h-[480px] relative rounded-3xl overflow-hidden bg-[#161616] shrink-0">
             {profile.photo ? (
-              <img
+              <SmartImage
                 src={profile.photo}
                 alt={profile.name}
                 className="w-full h-full md:absolute md:inset-0 object-cover"

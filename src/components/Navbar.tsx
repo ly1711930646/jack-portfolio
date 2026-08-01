@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useContent } from '../context/ContentContext'
 
@@ -51,8 +51,6 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', onScroll)
   }, [hero.navLinks, lockedId])
 
-
-
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href.startsWith('#')) {
       e.preventDefault()
@@ -69,19 +67,26 @@ const Navbar = () => {
     }
   }
 
-  const handleViewProfile = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    scrollToSection(e, '#about')
+  const handleLiquidMetalProfile = () => {
+    const el = document.querySelector('#about')
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY
+      setActiveId('about')
+      setLockedId('about')
+      setTimeout(() => setLockedId(null), 1200)
+      window.scrollTo({ top, behavior: 'smooth' })
+    }
     setTimeout(() => openProfile(), 800)
   }
 
   return (
     <>
       {/* ── Nav bar capsule ── */}
-      <nav className="nav-glass fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-4 px-5 md:px-8 py-3 rounded-full mx-auto max-w-6xl mt-4">
+      <nav className="nav-glass fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-4 px-5 md:px-8 py-3 rounded-full mx-auto max-w-6xl mt-4 transition-opacity duration-300">
         {/* Logo */}
         <a
           href="#hero"
-          className={`font-medium text-base tracking-wide whitespace-nowrap relative z-10 transition-colors duration-300 ${
+          className={`font-medium text-base tracking-wide whitespace-nowrap transition-colors duration-300 ${
             activeId === 'hero' ? 'text-[#4A90FF]' : 'text-[#D7E2EA]'
           }`}
           onClick={(e) => scrollToSection(e, '#hero')}
@@ -90,7 +95,7 @@ const Navbar = () => {
         </a>
 
         {/* Desktop nav links */}
-        <div key={hero.navLinks.map((l) => l.href).join('|')} className="hidden md:flex items-center gap-8 relative z-10">
+        <div key={hero.navLinks.map((l) => l.href).join('|')} className="hidden md:flex items-center gap-8">
           {hero.navLinks.map((link) => {
             const id = link.href.startsWith('#') ? link.href.slice(1) : ''
             const isActive = link.href.startsWith('#') && activeId === id
@@ -125,19 +130,18 @@ const Navbar = () => {
           })}
         </div>
 
-        {/* Desktop CTA */}
-        <a
-          href="#about"
-          className="hidden md:inline-flex items-center gap-2 bg-[#4A90FF] text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-[#3A80EF] transition-colors duration-300 whitespace-nowrap cursor-pointer relative z-10"
-          onClick={handleViewProfile}
+        {/* Desktop CTA — glass capsule matching the nav bar */}
+        <button
+          type="button"
+          onClick={handleLiquidMetalProfile}
+          className="hidden md:inline-flex items-center gap-2 nav-glass-button text-sm font-bold px-6 py-2.5 rounded-full whitespace-nowrap cursor-pointer"
         >
           {hero.ctaText}
-          <ArrowRight size={14} strokeWidth={2} />
-        </a>
+        </button>
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden text-[#D7E2EA]/70 hover:text-white transition-colors duration-300 relative z-10"
+          className="md:hidden text-[#D7E2EA]/70 hover:text-white transition-colors duration-300"
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle menu"
         >
@@ -187,18 +191,17 @@ const Navbar = () => {
               )
             })}
 
-            {/* Mobile CTA */}
-            <motion.a
-              href="#about"
-              className="mt-2 inline-flex items-center gap-2 bg-[#4A90FF] text-white text-sm font-medium px-7 py-3 rounded-full cursor-pointer"
+            {/* Mobile CTA — glass capsule matching the nav bar */}
+            <motion.button
+              type="button"
+              className="mt-2 nav-glass-button text-sm font-bold px-7 py-3 rounded-full cursor-pointer"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.35, ease: 'easeOut' }}
-              onClick={(e) => { setIsOpen(false); handleViewProfile(e) }}
+              onClick={() => { setIsOpen(false); handleLiquidMetalProfile() }}
             >
               {hero.ctaText}
-              <ArrowRight size={14} strokeWidth={2} />
-            </motion.a>
+            </motion.button>
           </motion.div>
         )}
       </AnimatePresence>

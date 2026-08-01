@@ -1,6 +1,7 @@
 import { useContent } from '../context/ContentContext'
+import { SmartImage } from './SmartImage'
 import { useEffect, useRef, useState } from 'react'
-import { TextShatter } from './TextShatter'
+import VaporizeTextCycle, { Tag } from './VaporizeTextCycle'
 
 const TRAIL_EMOJIS = ['🔥', '✨', '⚡', '💫', '🌟', '💡', '🎨', '🚀', '🌈', '💥', '🪐', '⭐']
 
@@ -25,8 +26,9 @@ const TrailEmojis = () => {
     const container = containerRef.current
     if (!container) return
 
-    const SPAWN_DIST = 16
-    const SPAWN_INTERVAL = 26
+    // 性能优化：降低生成频率、缩短存活时间，减少 DOM 节点堆积
+    const SPAWN_DIST = 36
+    const SPAWN_INTERVAL = 60
 
     const onMove = (e: MouseEvent) => {
       const rect = container.getBoundingClientRect()
@@ -43,6 +45,7 @@ const TrailEmojis = () => {
         el.textContent = TRAIL_EMOJIS[(Math.random() * TRAIL_EMOJIS.length) | 0]
         el.className = 'pointer-events-none absolute left-0 top-0 text-lg sm:text-xl select-none'
         el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`
+        el.style.willChange = 'transform, opacity'
         container.appendChild(el)
         sprites.current.push({
           el,
@@ -61,11 +64,11 @@ const TrailEmojis = () => {
       const arr = sprites.current
       for (let i = arr.length - 1; i >= 0; i--) {
         const s = arr[i]
-        // Stay at spawn point, drift gently like a spark/particle fading out
         s.x += s.vx
         s.y += s.vy
         s.rot += s.vr
-        s.life -= 0.014
+        // 加快消失速度：约 0.7s 消完，减少 DOM 长时间堆积
+        s.life -= 0.038
         if (s.life <= 0) {
           s.el.remove()
           arr.splice(i, 1)
@@ -108,7 +111,7 @@ const BannerMedia = ({ hero }: { hero: import('../content/siteContent').HeroCont
   if (!hero.bannerVideo && !hero.bannerImage) return null
 
   return hero.bannerVideo ? <BannerVideo src={hero.bannerVideo} fallback={hero.bannerImage} /> : (
-    <img
+    <SmartImage
       src={hero.bannerImage}
       alt="Banner Background"
       className="absolute inset-0 w-full h-full object-cover"
@@ -169,7 +172,7 @@ const BannerVideo = ({ src, fallback }: { src: string; fallback?: string }) => {
 
   // If video fails to load and we have a fallback image, show it instead
   if (failed && fallback) {
-    return <img src={fallback} alt="Banner Background" className="absolute inset-0 w-full h-full object-cover" />
+    return <SmartImage src={fallback} alt="Banner Background" className="absolute inset-0 w-full h-full object-cover" />
   }
 
   return (
@@ -189,9 +192,11 @@ const HeroSection = () => {
   const { content } = useContent()
   const { hero } = content
 
-  const hasBanner = !!(hero.bannerVideo || hero.bannerImage)
+  // 字号直接使用后台设置的值，与后台预览保持一致
   const bannerFontSize = parseInt(hero.bannerTextSize) || 18
-  const bannerLineHeight = parseFloat(hero.bannerTextLineHeight) || 1.2
+  const titleFontPx = Math.max(32, bannerFontSize)
+
+  const hasBanner = !!(hero.bannerVideo || hero.bannerImage)
   const bannerFontWeight = parseInt(hero.bannerTextWeight) || 700
 
   const subtitleFontSize = parseInt(hero.bannerSubtitleSize) || 18
@@ -202,6 +207,7 @@ const HeroSection = () => {
   const buttonTextColor = hero.bannerButtonTextColor || '#FFFFFF'
   const buttonFontSize = parseInt(hero.bannerButtonFontSize) || 14
   const buttonFontWeight = parseInt(hero.bannerButtonFontWeight) || 500
+  const contentOffsetY = parseInt(hero.bannerContentOffsetY || '0')
 
   return (
     <section
@@ -225,21 +231,36 @@ const HeroSection = () => {
       {/* Banner Content */}
       {hasBanner && hero.bannerText && (
         <div
-          className={`absolute inset-0 z-10 flex items-center justify-center px-6 sm:px-12 md:px-16 lg:px-20`}
+          className="absolute inset-0 z-10 flex flex-col items-center justify-start pt-[6%] px-6 sm:px-12 md:px-16 lg:px-20"
         >
-          <div className="text-center space-y-5" style={{ width: 'fit-content', maxWidth: '100%' }}>
+          <div
+            className="text-center flex flex-col items-center gap-12"
+            style={{ width: 'fit-content', maxWidth: '100%', transform: `translateY(${contentOffsetY}px)` }}
+          >
               {/* Title */}
               {hero.bannerText && (
-                <TextShatter
-                  text={hero.bannerText}
-                  className="whitespace-nowrap"
-                  style={{
-                    fontSize: `clamp(2rem, ${bannerFontSize}px, 11vw)`,
-                    color: hero.bannerTextColor,
-                    lineHeight: bannerLineHeight,
-                    fontWeight: bannerFontWeight,
-                  }}
-                />
+                <div className="w-full flex items-center justify-center">
+                  <VaporizeTextCycle
+                    texts={[hero.bannerText]}
+                    font={{
+                      fontFamily: 'Inter, "PingFang SC", "Microsoft YaHei", sans-serif',
+                      fontSize: `${titleFontPx}px`,
+                      fontWeight: bannerFontWeight,
+                    }}
+                    color={hero.bannerTextColor}
+                    spread={5}
+                    density={5}
+                    animation={{
+                      vaporizeDuration: 1.2,
+                      fadeInDuration: 1.2,
+                      waitDuration: 0.4,
+                    }}
+                    direction="left-to-right"
+                    alignment={(hero.bannerTextAlign as 'left' | 'center' | 'right') || 'center'}
+                    tag={Tag.H1}
+                    interactive
+                  />
+                </div>
               )}
 
               {/* Subtitle */}
@@ -270,13 +291,13 @@ const HeroSection = () => {
                     fontSize: `${buttonFontSize}px`,
                     fontWeight: buttonFontWeight,
                   }}
-                  className="inline-block mt-2 px-7 py-3 rounded-full text-white font-medium text-sm transition-transform hover:scale-105 cursor-pointer"
+                  className="inline-block px-7 py-3 rounded-full text-white font-medium text-sm transition-transform hover:scale-105 cursor-pointer"
                 >
                   {hero.bannerButtonText}
                 </a>
               )}
             </div>
-          </div>
+        </div>
       )}
 
       {/* Scroll Down Indicator */}

@@ -29,7 +29,8 @@ html, body, #root {
     background: rgba(15, 15, 20, 0.4);
     backdrop-filter: blur(48px) saturate(1.2);
     -webkit-backdrop-filter: blur(48px) saturate(1.2);
-    border: none;
+    /* 纯灰白色描边（无动画） */
+    border: 1px solid rgba(255, 255, 255, 0.18);
     box-shadow:
       /* 极薄顶部内高光 */
       inset 0 0.5px 0 rgba(255, 255, 255, 0.12);
@@ -51,36 +52,34 @@ html, body, #root {
     z-index: 1;
   }
 
-  /* Animated conic gradient border for navbar */
-  .nav-glass::before {
+  /* 与导航栏同款的胶囊按钮 — 白底黑字高对比版 */
+  .nav-glass-button {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(48px) saturate(1.2);
+    -webkit-backdrop-filter: blur(48px) saturate(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow:
+      inset 0 0.5px 0 rgba(255, 255, 255, 0.5);
+    position: relative;
+    overflow: hidden;
+    color: #0a0a0a;
+    transition: background 0.25s ease, transform 0.25s ease;
+  }
+
+  .nav-glass-button:hover {
+    background: #ffffff;
+  }
+
+  .nav-glass-button::after {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 1.2px;
-    background: conic-gradient(
-      from var(--border-angle-nav, 0deg),
-      rgba(255, 255, 255, 0) 0%,
-      rgba(180, 200, 255, 0.2) 18%,
-      rgba(91, 156, 255, 0.35) 36%,
-      rgba(140, 170, 255, 0.25) 54%,
-      rgba(255, 255, 255, 0) 72%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 20%, rgba(255, 255, 255, 0.25) 0%, transparent 60%);
     pointer-events: none;
-    animation: nav-border-spin 5s linear infinite;
-    z-index: 2;
+    z-index: 0;
   }
-}
-
-@keyframes nav-border-spin {
-  from { --border-angle-nav: 0deg; }
-  to   { --border-angle-nav: 360deg; }
 }
 
 @keyframes bounce-down {
@@ -192,3 +191,277 @@ html, body, #root {
   will-change: transform;
 }
 
+/* ── Spotlight Card ──
+   鼠标悬停时卡片周围出现跟随光标的光斑。
+   --x/--y 为相对于 .spotlight-glow 的坐标（JS 计算）。
+   光效放在卡片同级的 .spotlight-glow 层上，并向外扩展 80px，
+   这样光晕可以自然溢出卡片四边，不会被卡片圆角或内部堆叠裁切；
+   同时 wrapper 在 hover 时置顶，保证光效不会被其他折叠卡片盖住。
+*/
+.spotlight-card {
+  --base: 220;          /* blue 基准色相 */
+  --spread: 200;        /* 色相随鼠标横向扩散量 */
+  --saturation: 100;
+  --lightness: 70;
+  --radius: 24;         /* 与卡片圆角对应：base 24px（响应式在下面覆盖） */
+  --border: 3;          /* 边框宽度(px) */
+  --backdrop: #0C0C0C;  /* 卡片背景与页面背景一致，不透明 */
+  --backup-border: rgba(35, 35, 40, 0.9);
+  --size: 320;          /* spotlight 半径基准 */
+  --border-size: calc(var(--border, 2) * 1px);
+  --spotlight-size: calc(var(--size, 150) * 1px);
+  --hue: calc(var(--base) + (var(--xp, 0) * var(--spread, 0)));
+
+  background-color: var(--backdrop);
+  border: var(--border-size) solid var(--backup-border);
+  top: 0;
+  box-shadow:
+    /* 顶部微高光，强化卡片边缘 */
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    /* 深层投影，让堆叠卡片与背景/下层分离 */
+    0 32px 85px rgba(0, 0, 0, 0.78),
+    0 16px 40px rgba(0, 0, 0, 0.58),
+    0 4px 12px rgba(0, 0, 0, 0.38);
+  position: relative;
+  touch-action: none;
+  transition:
+    top 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s ease;
+}
+
+/* 鼠标移入卡片矩形框内时才显示光效 */
+.spotlight-wrapper.is-active .spotlight-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 40px hsl(var(--hue) calc(var(--saturation) * 1%) calc(var(--lightness) * 1%) / 0.18),
+    0 44px 110px rgba(0, 0, 0, 0.85),
+    0 22px 55px rgba(0, 0, 0, 0.62),
+    0 6px 18px rgba(0, 0, 0, 0.42);
+}
+
+/* 边框跟随光标的发光描边（边框 spotlight） */
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  z-index: 0;
+  border-radius: inherit;
+  padding: 3px;
+  background: radial-gradient(
+    circle at calc(var(--x, -9999) * 1px) calc(var(--y, -9999) * 1px),
+    hsl(var(--hue) calc(var(--saturation) * 1%) calc(var(--lightness) * 1%) / 1) 0%,
+    hsl(var(--hue) calc(var(--saturation) * 1%) calc(var(--lightness) * 1%) / 0.55) 22%,
+    hsl(var(--hue) calc(var(--saturation) * 1%) calc(var(--lightness) * 1%) / 0.18) 55%,
+    transparent 85%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.spotlight-wrapper.is-active .spotlight-card::before {
+  opacity: 1;
+}
+
+/* 让发光描边/外发光层的圆角跟着外层卡片响应式圆角走，保证四个角一致 */
+@media (min-width: 640px) {
+  .spotlight-card { --radius: 32; }
+}
+@media (min-width: 768px) {
+  .spotlight-card { --radius: 40; }
+}
+
+/* 光效层：放在卡片同级，向外扩展 80px，不被卡片内部裁切；
+   z-index 高于卡片，使光斑显示在卡片表面（跟随鼠标可见）。
+   pointer-events:none 保证不阻挡卡片的拖拽/点击交互。 */
+.spotlight-glow {
+  position: absolute;
+  inset: -80px;
+  pointer-events: none;
+  z-index: 2;
+  overflow: visible;
+}
+
+/* 光标跟随的彩色柔光 */
+.spotlight-glow::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--x, -9999) * 1px);
+  top: calc(var(--y, -9999) * 1px);
+  width: var(--spotlight-size);
+  height: var(--spotlight-size);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    hsl(var(--hue) calc(var(--saturation) * 1%) calc(var(--lightness) * 1%) / 0.38) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+/* 光标跟随的白色高光芯 */
+.spotlight-glow::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--x, -9999) * 1px);
+  top: calc(var(--y, -9999) * 1px);
+  width: calc(var(--spotlight-size) * 0.42);
+  height: calc(var(--spotlight-size) * 0.42);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    hsl(0 100% 100% / 0.22) 0%,
+    transparent 60%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.spotlight-wrapper.is-active .spotlight-glow::before,
+.spotlight-wrapper.is-active .spotlight-glow::after {
+  opacity: 1;
+}
+
+/* 真实内容需要抬到光效层之上 */
+.spotlight-card > .spotlight-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* 旧 outer-glow 容器不再使用，避免占位 */
+.spotlight-card > .spotlight-content {
+  display: none;
+}
+
+/* 弹窗打开时隐藏顶部导航栏和右下角返回顶部按钮 */
+body.modal-open .back-to-top,
+body.modal-open nav.nav-glass {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ===== 弹窗折叠动画 ===== */
+/* 打开：自然下落的展开（弹性 ease-out，长一些更缓和） */
+@keyframes modalShellIn {
+  from {
+    opacity: 0;
+    transform: scaleY(0.96) translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+  }
+}
+
+/* 关闭：从底部向上柔和折叠（与打开对称的 ease-out，时长更长更从容） */
+@keyframes modalShellOut {
+  from {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scaleY(0.9) translateY(-12px);
+  }
+}
+
+/* 背景遮罩淡入（比弹窗稍后结束） */
+@keyframes modalBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* 背景遮罩淡出（与弹窗同步结束） */
+@keyframes modalBackdropOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* 打开：340ms，Apple 风格 ease-out（轻微回弹感，长一些更从容） */
+.modal-shell {
+  transform-origin: top center;
+  animation: modalShellIn 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+
+/* 关闭：420ms，与打开对称的 ease-out，更自然流畅 */
+.modal-shell--closing {
+  animation: modalShellOut 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.modal-backdrop {
+  animation: modalBackdropIn 300ms ease-out both;
+}
+
+.modal-backdrop--closing {
+  animation: modalBackdropOut 360ms ease-out both;
+}
+
+/* 严重动效偏好：禁用弹窗折叠动画 */
+@media (prefers-reduced-motion: reduce) {
+  .modal-shell,
+  .modal-shell--closing,
+  .modal-backdrop,
+  .modal-backdrop--closing {
+    animation: none;
+  }
+}
+
+/* ===== Marquee 自动轮播 ===== */
+/* 内容已三倍复制，translateX(-33.3333%) 正好走完整一套，首尾无缝衔接 */
+@keyframes marqueeLeft {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-33.3333%); }
+}
+
+@keyframes marqueeRight {
+  from { transform: translateX(-33.3333%); }
+  to   { transform: translateX(0); }
+}
+
+.marquee-row {
+  /* 默认暂停，等 JS 量好宽度并进入视口后再开始，避免 duration 未计算好时动画跳变 */
+  animation-play-state: paused;
+  will-change: transform;
+}
+
+.marquee-left {
+  animation: marqueeLeft var(--marquee-duration, 30s) linear infinite;
+}
+
+.marquee-right {
+  animation: marqueeRight var(--marquee-duration, 30s) linear infinite;
+}
+
+/* JS 量好宽度且组件在视口内后，正式启动动画 */
+.marquee-running {
+  animation-play-state: running;
+}
+
+/* 鼠标悬停暂停，方便用户细看某张作品 */
+.marquee-row:hover {
+  animation-play-state: paused !important;
+}
+
+/* 严重动效偏好：禁用轮播 */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-row,
+  .marquee-left,
+  .marquee-right,
+  .marquee-running {
+    animation: none !important;
+  }
+}

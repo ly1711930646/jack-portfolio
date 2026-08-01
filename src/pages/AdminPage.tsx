@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useContent, mergeWithDefault } from '../context/ContentContext'
 import { logout } from './LoginPage'
-import { isGitHubReady, uploadImage } from '../lib/githubClient'
+import { isGitHubReady, uploadImage, uploadVideo, fetchImageBlobUrl } from '../lib/githubClient'
+import { isCosReady } from '../lib/cosClient'
 import type {
   HeroContent,
   MarqueeContent,
@@ -55,48 +56,246 @@ const Card = ({ children, title }: { children: React.ReactNode; title?: string }
   </div>
 )
 
+// 后台专用图片：先尝试 raw 直连，失败则通过 GitHub API 拉取 blob URL 显示。
+// 解决 raw.githubusercontent.com 在用户网络/沙箱中被拦截时预览空白的问题。
+const AdminImage = ({ src, alt, className }: { src: string; alt?: string; className?: string }) => {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    setBlobUrl(null)
+    setFailed(false)
+  }, [src])
+
+  const handleError = async () => {
+    if (failed) return
+    if (blobUrl) {
+      setFailed(true)
+      return
+    }
+    try {
+      const url = await fetchImageBlobUrl(src)
+      setBlobUrl(url)
+    } catch {
+      setFailed(true)
+    }
+  }
+
+  if (failed) {
+    return (
+      <div className={`flex items-center justify-center bg-[#0C0C0C] text-white/30 text-xs ${className || ''}`}>
+        预览失败
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={blobUrl || src}
+      alt={alt || ''}
+      className={className}
+      onError={handleError}
+      crossOrigin="anonymous"
+    />
+  )
+}
+
 const ImagePreview = ({ src, alt }: { src: string; alt?: string }) => (
   <div className="mt-2 rounded-xl overflow-hidden border border-white/10 bg-[#0C0C0C] w-full max-w-[200px]">
-    <img src={src} alt={alt || ''} className="w-full h-auto object-cover" />
+    <AdminImage src={src} alt={alt || ''} className="w-full h-auto object-cover" />
   </div>
 )
 
-// 通用「上传到 GitHub」按钮：浏览器直传图片到仓库，成功后把相对路径回写到对应字段
-const GitHubImageUploader = ({ onPicked, label = '上传到 GitHub' }: { value: string; onPicked: (url: string) => void; label?: string }) => {
+// 通用「上传到 GitHub」按钮：浏览器直传图片/视频到仓库，成功后把绝对 URL 回写到对应字段
+// 默认接受图片（accept='image/*'），视频场景需传 accept='video/*'，内部按 mime 自动选上传函数
+// 传 multiple=true + onPickedBatch 可一次批量上传多张图片。
+const GitHubAssetUploader = ({
+  onPicked,
+  onPickedBatch,
+  label = '上传到 GitHub',
+  accept = 'image/*',
+  multiple = false,
+}: {
+  value?: string
+  onPicked?: (url: string) => void
+  onPickedBatch?: (urls: string[]) => void
+  label?: string
+  accept?: string
+  multiple?: boolean
+}) => {
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
+  const [progress, setProgress] = useState('')
   const [err, setErr] = useState('')
-  if (!isGitHubReady()) {
-    return <span className="text-xs text-white/30">（未配置 GitHub，上传不可用）</span>
+  if (!isGitHubReady() && !isCosReady()) {
+    return <span className="text-xs text-white/30">（未配置 GitHub / 腾讯云 COS，上传不可用）</span>
   }
+  // 实际使用的图床后端：优先 COS，其次 GitHub
+  const usingCos = isCosReady()
+  const usingGh = isGitHubReady() && !isCosReady()
+
+  const uploadOne = async (file: File): Promise<string> => {
+    return file.type.startsWith('video/') ? uploadVideo(file) : uploadImage(file)
+  }
+
+  // 限制并发数，避免 GitHub API 因瞬时请求过多被限流
+  const runWithConcurrency = async <T,>(tasks: (() => Promise<T>)[], limit: number): Promise<T[]> => {
+    const results: T[] = new Array(tasks.length)
+    const iter = tasks.entries()
+    const workers = Array.from({ length: limit }, async () => {
+      for (const [idx, task] of iter) {
+        results[idx] = await task()
+      }
+    })
+    await Promise.all(workers)
+    return results
+  }
+
   const handle = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const files = Array.from(e.target.files ?? [])
     e.target.value = ''
-    if (!file) return
-    if (!file.type.startsWith('image/')) {
-      setErr('请选择图片文件')
+    if (!files.length) return
+
+    // 单文件模式
+    if (!multiple) {
+      const file = files[0]
+      setBusy(true)
+      setErr('')
+      try {
+        const url = await uploadOne(file)
+        onPicked?.(url)
+      } catch (e: unknown) {
+        setErr(e instanceof Error ? e.message : '上传失败')
+      } finally {
+        setBusy(false)
+      }
       return
     }
+
+    // 批量模式：每张图单独捕获错误，成功的自动填入，失败的单独提示
     setBusy(true)
     setErr('')
+    setProgress(`上传中（0/${files.length}）…`)
+    const successes: string[] = []
+    const failures: string[] = []
     try {
-      const url = await uploadImage(file)
-      onPicked(url)
+      const tasks = files.map((file, i) => async () => {
+        try {
+          const url = await uploadOne(file)
+          successes.push(url)
+        } catch (e: unknown) {
+          failures.push(`${file.name}: ${e instanceof Error ? e.message : '失败'}`)
+        }
+        setProgress(`上传中（${i + 1}/${files.length}）…`)
+      })
+      // GitHub Contents API 在并发写同一分支时会因引用竞争返回 409，
+      // 所以 GitHub 后端必须串行；COS 后端可保持并发。
+      await runWithConcurrency(tasks, usingCos ? 3 : 1)
+      if (successes.length > 0) onPickedBatch?.(successes)
+      if (failures.length > 0) setErr(`成功 ${successes.length}/${files.length} 张；失败：${failures.join('; ')}`)
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : '上传失败')
+      setErr(e instanceof Error ? e.message : '批量上传失败')
     } finally {
       setBusy(false)
+      setProgress('')
+    }
+  }
+
+  return (
+    <div className="mt-2 flex items-center gap-2 flex-wrap">
+      <button type="button" onClick={() => inputRef.current?.click()} disabled={busy}
+        className="text-xs text-[#4A90FF] hover:text-[#5C9CFF] font-medium disabled:opacity-50">
+        {busy ? (progress || '上传中…') : label}
+      </button>
+      <span className={`text-xs ${usingCos ? 'text-green-400/80' : 'text-[#4A90FF]/70'}`}>
+        {usingCos ? '腾讯云 COS' : usingGh ? 'GitHub' : ''}
+      </span>
+      <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handle} multiple={multiple} />
+      {err && <span className="text-xs text-red-400">{err}</span>}
+    </div>
+  )
+}
+
+// 背景视频 URL 状态提示:帮助识别当前值是不是 GitHub 上传的视频,避免被 Mux/云存储等第三方 URL 覆盖
+const BannerVideoStatus = ({ url }: { url: string }) => {
+  if (!url) return null
+  const isCos = url.includes('myqcloud.com')
+  const isRaw = url.includes('raw.githubusercontent.com')
+  const isServed = url.includes('/assets/uploads/')
+  const isJsdelivr = url.includes('jsdelivr') || url.includes('zzko.cn')
+  const isThirdPartyCdn = /(cloudfront\.net|mux\.com|googleapis\.com|amazonaws\.com|higgs\.ai)/.test(url)
+  if (isCos) {
+    return (
+      <p className="mt-2 text-xs text-green-400/80">
+        ✓ 已使用腾讯云 COS（国内稳定直连，链接固定不随部署变化）
+      </p>
+    )
+  }
+  if (isRaw || isServed) {
+    return (
+      <p className="mt-2 text-xs text-green-400/80">
+        ✓ 已使用 GitHub 同源托管（/jack-portfolio/assets/uploads），稳定可靠，删除时自动同步清理仓库文件
+      </p>
+    )
+  }
+  if (isJsdelivr) {
+    return (
+      <p className="mt-2 text-xs text-yellow-400/80">
+        ⚠️ 第三方 jsDelivr 镜像链接，可能不稳定；建议用「上传视频」按钮直传，自动生成 GitHub 直连地址。
+      </p>
+    )
+  }
+  if (isThirdPartyCdn) {
+    return (
+      <p className="mt-2 text-xs text-yellow-400/80">
+        ⚠️ 第三方 CDN 链接（cloudfront / mux / 其它），可能加载慢或被墙。建议用「上传视频」按钮直传，自动生成 GitHub 直连地址。
+      </p>
+    )
+  }
+  return (
+    <p className="mt-2 text-xs text-white/40">
+      非云存储上传的链接，如加载慢/失败，建议用下方「上传视频」按钮直传。
+    </p>
+  )
+}
+
+// 通用复制按钮:点击后把 value 写入剪贴板,1.8s 内显示 ✓ 已复制反馈
+// 用 navigator.clipboard + 老式 textarea fallback 兼容老浏览器/HTTP 上下文
+const CopyButton = ({ value, label = '复制链接' }: { value: string; label?: string }) => {
+  const [copied, setCopied] = useState(false)
+  const handle = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value)
+      } else {
+        // 老浏览器兜底
+        const ta = document.createElement('textarea')
+        ta.value = value
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        try { document.execCommand('copy') } catch { /* ignore */ }
+        document.body.removeChild(ta)
+      }
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1800)
+    } catch {
+      /* 用户拒绝授权等异常,忽略 */
     }
   }
   return (
-    <div className="mt-2 flex items-center gap-2">
-      <button type="button" onClick={() => inputRef.current?.click()} disabled={busy}
-        className="text-xs text-[#4A90FF] hover:text-[#5C9CFF] font-medium disabled:opacity-50">
-        {busy ? '上传中…' : label}
-      </button>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handle} />
-      {err && <span className="text-xs text-red-400">{err}</span>}
-    </div>
+    <button
+      type="button"
+      onClick={handle}
+      className={`shrink-0 px-3.5 text-xs font-medium rounded-lg border transition-colors ${
+        copied
+          ? 'border-green-400/50 text-green-400 bg-green-400/10'
+          : 'border-white/10 text-[#4A90FF] hover:text-[#5C9CFF] hover:border-[#4A90FF]/50'
+      }`}
+    >
+      {copied ? '✓ 已复制' : label}
+    </button>
   )
 }
 
@@ -255,7 +454,7 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
     size: (
       <div>
         <label className="text-xs text-white/50 block mb-2">主标题文字大小 (px)</label>
-        <input type="number" min={12} max={120} value={hero.bannerTextSize}
+        <input type="number" min={12} max={300} value={hero.bannerTextSize}
           onChange={(e) => onChange({ ...hero, bannerTextSize: e.target.value })}
           className="w-full bg-transparent border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-[#4A90FF]/50 focus:outline-none transition-colors" />
       </div>
@@ -327,9 +526,12 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
   const [dragOverSubtitleField, setDragOverSubtitleField] = useState<string | null>(null)
   const [dragOverButtonField, setDragOverButtonField] = useState<string | null>(null)
 
-  const BannerPreview = ({ hero }: { hero: HeroContent }) => {
+  const BannerPreview = ({ hero, onChange }: { hero: HeroContent; onChange: (v: HeroContent) => void }) => {
     const containerRef = useRef<HTMLDivElement>(null)
     const [scale, setScale] = useState(1)
+    const [dragging, setDragging] = useState(false)
+    const dragStartY = useRef(0)
+    const dragStartOffset = useRef(0)
 
     useEffect(() => {
       const el = containerRef.current
@@ -386,14 +588,38 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
           )}
           <div className="absolute inset-0 bg-black/40" />
 
-          {/* Content */}
-          <div className="absolute inset-0 flex items-center justify-center px-20">
-            <div className="text-center" style={{ width: 'fit-content', maxWidth: '100%' }}>
+          {/* Content — draggable in preview */}
+          <div
+            className="absolute inset-x-0 top-[6%] flex items-start justify-center px-20"
+            style={{ transform: `translateY(${parseInt(hero.bannerContentOffsetY || '0')}px)` }}
+            onPointerDown={(e) => {
+              e.preventDefault()
+              setDragging(true)
+              dragStartY.current = e.clientY
+              dragStartOffset.current = parseInt(hero.bannerContentOffsetY || '0')
+              const el = e.currentTarget
+              el.setPointerCapture(e.pointerId)
+            }}
+            onPointerMove={(e) => {
+              if (!dragging) return
+              const deltaPx = (e.clientY - dragStartY.current) / scale
+              const nextOffset = Math.round(dragStartOffset.current + deltaPx)
+              onChange({ ...hero, bannerContentOffsetY: String(nextOffset) })
+            }}
+            onPointerUp={(e) => {
+              setDragging(false)
+              e.currentTarget.releasePointerCapture(e.pointerId)
+            }}
+          >
+            <div className={`text-center relative ${dragging ? 'cursor-grabbing' : 'cursor-grab'} group`} style={{ width: 'fit-content', maxWidth: '100%' }}>
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-white/40 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                拖动调整位置
+              </div>
               {hero.bannerText && (
                 <h1
                   className="whitespace-nowrap"
                   style={{
-                    fontSize: `clamp(2rem, ${bannerFontSize}px, 140px)`,
+                    fontSize: `${Math.max(32, bannerFontSize)}px`,
                     color: hero.bannerTextColor,
                     lineHeight: bannerLineHeight,
                     fontWeight: bannerFontWeight,
@@ -438,18 +664,28 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
   return (
     <div className="space-y-6">
       <Card title="Banner 预览">
-        <p className="text-xs text-white/40 mb-3">实时预览（按 1280×720 视口比例缩放，文字过大会自动截断）</p>
-        <BannerPreview hero={hero} />
+        <p className="text-xs text-white/40 mb-3">实时预览（按 1280×720 视口比例缩放，文字过大会自动截断）。在预览图中按住文字/按钮可上下拖动调整位置。</p>
+        <BannerPreview hero={hero} onChange={onChange} />
+        <div className="mt-4 flex items-center gap-3">
+          <label className="text-xs text-white/50 whitespace-nowrap">垂直偏移（px）</label>
+          <input
+            type="number"
+            value={hero.bannerContentOffsetY || '0'}
+            onChange={(e) => onChange({ ...hero, bannerContentOffsetY: e.target.value })}
+            className="w-24 bg-transparent border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-[#4A90FF]/50 focus:outline-none transition-colors"
+          />
+          <span className="text-xs text-white/30">正数向下，负数向上</span>
+        </div>
       </Card>
 
       <Card title="背景图片">
-        <p className="text-xs text-white/40 mb-3">支持 JPG / PNG / GIF / WebP 等格式，填 URL 或点下方「上传到云」直传腾讯云 COS</p>
+        <p className="text-xs text-white/40 mb-3">支持 JPG / PNG / GIF / WebP 等格式，填 URL 或点下方按钮直传（已配腾讯云 COS 则直传 COS，否则直传 GitHub，均为国内可直连）</p>
         <Input
           placeholder="https://example.com/bg.jpg（留空则不显示）"
           value={hero.bannerImage}
           onChange={(e) => onChange({ ...hero, bannerImage: e.target.value })}
         />
-        <GitHubImageUploader value={hero.bannerImage} onPicked={(u) => onChange({ ...hero, bannerImage: u })} />
+        <GitHubAssetUploader value={hero.bannerImage} onPicked={(u) => onChange({ ...hero, bannerImage: u })} />
         {hero.bannerImage && (
           <div className="mt-4 rounded-xl overflow-hidden border border-white/10 bg-[#0C0C0C]">
             <img src={hero.bannerImage} alt="Banner 预览" className="w-full h-auto max-h-[400px] object-cover" />
@@ -458,11 +694,24 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
       </Card>
 
       <Card title="背景视频">
-        <p className="text-xs text-white/40 mb-3">支持 MP4 / WebM 格式，填入视频 URL 地址。视频优先于图片显示。</p>
-        <Input
-          placeholder="https://example.com/video.mp4（留空则不显示）"
+        <p className="text-xs text-white/40 mb-3">支持 MP4 / WebM 格式，填入视频 URL 或点下方按钮直传（腾讯云 COS / GitHub）。视频优先于图片显示。</p>
+        <div className="flex gap-2">
+          <input
+            placeholder="https://example.com/video.mp4（留空则不显示）"
+            value={hero.bannerVideo}
+            onChange={(e) => onChange({ ...hero, bannerVideo: e.target.value })}
+            className="flex-1 min-w-0 bg-[#161616] border border-white/10 rounded-lg px-4 py-2.5 text-sm text-[#D7E2EA] placeholder:text-white/30 focus:outline-none focus:border-[#4A90FF] transition-colors"
+          />
+          {hero.bannerVideo && <CopyButton value={hero.bannerVideo} />}
+        </div>
+        {hero.bannerVideo && (
+          <BannerVideoStatus url={hero.bannerVideo} />
+        )}
+        <GitHubAssetUploader
           value={hero.bannerVideo}
-          onChange={(e) => onChange({ ...hero, bannerVideo: e.target.value })}
+          accept="video/mp4,video/webm,video/quicktime,video/*"
+          label="上传视频到 GitHub"
+          onPicked={(u) => onChange({ ...hero, bannerVideo: u })}
         />
         {hero.bannerVideo && (
           <video src={hero.bannerVideo} controls autoPlay muted loop playsInline className="mt-4 rounded-xl border border-white/10 bg-[#0C0C0C] w-full max-h-[400px]">
@@ -588,7 +837,7 @@ const MarqueeEditor = ({ marquee, onChange }: { marquee: MarqueeContent; onChang
           {marquee.row1.map((src, i) => (
             <div key={i} className="bg-[#0C0C0C] rounded-xl border border-white/10 p-3">
               <Input value={src} onChange={(e) => updateImage('row1', i, e.target.value)} />
-              <GitHubImageUploader value={src} onPicked={(u) => updateImage('row1', i, u)} />
+              <GitHubAssetUploader value={src} onPicked={(u) => updateImage('row1', i, u)} />
               <ImagePreview src={src} />
               <button onClick={() => removeImage('row1', i)} className="mt-2 text-xs text-red-400 hover:text-red-300">删除</button>
             </div>
@@ -602,7 +851,7 @@ const MarqueeEditor = ({ marquee, onChange }: { marquee: MarqueeContent; onChang
           {marquee.row2.map((src, i) => (
             <div key={i} className="bg-[#0C0C0C] rounded-xl border border-white/10 p-3">
               <Input value={src} onChange={(e) => updateImage('row2', i, e.target.value)} />
-              <GitHubImageUploader value={src} onPicked={(u) => updateImage('row2', i, u)} />
+              <GitHubAssetUploader value={src} onPicked={(u) => updateImage('row2', i, u)} />
               <ImagePreview src={src} />
               <button onClick={() => removeImage('row2', i)} className="mt-2 text-xs text-red-400 hover:text-red-300">删除</button>
             </div>
@@ -723,7 +972,7 @@ const AboutEditor = ({ about, onChange }: { about: AboutContent; onChange: (v: A
                 value={about.profile.photo}
                 onChange={(e) => updateProfile('photo', e.target.value)}
               />
-              <GitHubImageUploader value={about.profile.photo} onPicked={(u) => updateProfile('photo', u)} />
+              <GitHubAssetUploader value={about.profile.photo} onPicked={(u) => updateProfile('photo', u)} />
             </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -941,7 +1190,7 @@ const AboutEditor = ({ about, onChange }: { about: AboutContent; onChange: (v: A
             <div key={key}>
               <Label>{key}</Label>
               <Input value={src} onChange={(e) => updateDecorative(key as keyof AboutContent['decorativeImages'], e.target.value)} />
-              <GitHubImageUploader value={src} onPicked={(u) => updateDecorative(key as keyof AboutContent['decorativeImages'], u)} />
+              <GitHubAssetUploader value={src} onPicked={(u) => updateDecorative(key as keyof AboutContent['decorativeImages'], u)} />
               <ImagePreview src={src} />
             </div>
           ))}
@@ -1062,9 +1311,20 @@ const ServicesEditor = ({ services, onChange }: { services: ServicesContent; onC
 }
 
 const ProjectsEditor = ({ projects, onChange }: { projects: ProjectsContent; onChange: (v: ProjectsContent) => void }) => {
+  const [newTab, setNewTab] = useState('')
+
   const updateItem = (index: number, field: keyof ProjectItem, value: string) => {
     const next = [...projects.items]
-    next[index] = { ...next[index], [field]: value }
+    if (field === 'tags') {
+      // 分类标签用逗号分隔，存为 string[]
+      const tags = value
+        .split(/[,，]/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0)
+      next[index] = { ...next[index], tags }
+    } else {
+      next[index] = { ...next[index], [field]: value }
+    }
     onChange({ ...projects, items: next })
   }
 
@@ -1077,9 +1337,7 @@ const ProjectsEditor = ({ projects, onChange }: { projects: ProjectsContent; onC
           number: String(projects.items.length + 1).padStart(2, '0'),
           name: '',
           category: '',
-          col1Img1: '',
-          col1Img2: '',
-          col2Img: '',
+          tags: [],
         },
       ],
     })
@@ -1090,10 +1348,102 @@ const ProjectsEditor = ({ projects, onChange }: { projects: ProjectsContent; onC
     onChange({ ...projects, items: next })
   }
 
+  const addImages = (index: number, urls: string[]) => {
+    const next = [...projects.items]
+    next[index] = { ...next[index], images: [...(next[index].images ?? []), ...urls] }
+    onChange({ ...projects, items: next })
+  }
+
+  const removeImage = (index: number, imgIndex: number) => {
+    const next = [...projects.items]
+    const images = [...(next[index].images ?? [])]
+    images.splice(imgIndex, 1)
+    next[index] = { ...next[index], images }
+    onChange({ ...projects, items: next })
+  }
+
+  const moveImage = (index: number, imgIndex: number, direction: 'up' | 'down') => {
+    const next = [...projects.items]
+    const images = [...(next[index].images ?? [])]
+    const target = direction === 'up' ? imgIndex - 1 : imgIndex + 1
+    if (target < 0 || target >= images.length) return
+    const temp = images[imgIndex]
+    images[imgIndex] = images[target]
+    images[target] = temp
+    next[index] = { ...next[index], images }
+    onChange({ ...projects, items: next })
+  }
+
   return (
     <div className="space-y-6">
       <Card title="标题">
         <Input value={projects.title} onChange={(e) => onChange({ ...projects, title: e.target.value })} />
+      </Card>
+
+      <Card title="选项栏(分类标签)">
+        <p className="text-xs text-white/40 mb-3">第一个标签默认作为「全部」用于展示所有项目；其余标签用于筛选对应分类。</p>
+
+        <div className="space-y-2 mb-4">
+          {(projects.filterTabs ?? []).length === 0 && (
+            <p className="text-xs text-white/30">暂无分类标签</p>
+          )}
+          {(projects.filterTabs ?? []).map((tab, i) => (
+            <div key={`${tab}-${i}`} className="flex items-center gap-2">
+              <span className="flex-1 min-w-0 bg-[#161616] border border-white/10 rounded-lg px-4 py-2.5 text-sm text-[#D7E2EA] truncate">
+                {tab}
+              </span>
+              {i === 0 && (
+                <span className="text-xs text-white/40 px-2 shrink-0">全部</span>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  const next = [...(projects.filterTabs ?? [])]
+                  next.splice(i, 1)
+                  onChange({ ...projects, filterTabs: next })
+                }}
+                className="shrink-0 text-xs text-red-400 hover:text-red-300 px-2 py-2"
+              >
+                删除
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <Input
+            value={newTab}
+            onChange={(e) => setNewTab(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                const label = newTab.trim()
+                if (!label) return
+                onChange({
+                  ...projects,
+                  filterTabs: [...(projects.filterTabs ?? []), label],
+                })
+                setNewTab('')
+              }
+            }}
+            placeholder="输入新分类标签，按回车或点击添加"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const label = newTab.trim()
+              if (!label) return
+              onChange({
+                ...projects,
+                filterTabs: [...(projects.filterTabs ?? []), label],
+              })
+              setNewTab('')
+            }}
+            className="shrink-0 px-4 py-2 text-sm font-medium rounded-lg bg-[#4A90FF] text-white hover:bg-[#5C9CFF] transition-colors"
+          >
+            添加
+          </button>
+        </div>
       </Card>
 
       {projects.items.map((item, i) => (
@@ -1112,23 +1462,104 @@ const ProjectsEditor = ({ projects, onChange }: { projects: ProjectsContent; onC
               <Input value={item.category} onChange={(e) => updateItem(i, 'category', e.target.value)} />
             </div>
             <div>
-              <Label>左列上图</Label>
-              <Input value={item.col1Img1} onChange={(e) => updateItem(i, 'col1Img1', e.target.value)} />
-              <GitHubImageUploader value={item.col1Img1} onPicked={(u) => updateItem(i, 'col1Img1', u)} />
-              <ImagePreview src={item.col1Img1} />
+              <Label>分类标签</Label>
+              <p className="text-xs text-white/40 mb-2">用于选项栏过滤，多个用逗号分隔。</p>
+              <Input
+                value={(item.tags ?? []).join(',')}
+                onChange={(e) => updateItem(i, 'tags', e.target.value)}
+                placeholder="UI设计, 跨境电商"
+              />
             </div>
-            <div>
-              <Label>左列下图</Label>
-              <Input value={item.col1Img2} onChange={(e) => updateItem(i, 'col1Img2', e.target.value)} />
-              <GitHubImageUploader value={item.col1Img2} onPicked={(u) => updateItem(i, 'col1Img2', u)} />
-              <ImagePreview src={item.col1Img2} />
+            <div className="sm:col-span-2">
+              <Label>主图(整块)</Label>
+              <p className="text-xs text-white/40 mb-2">设置后该图将占满项目底部整块区域,代替左/右三栏布局;留空则降级到三栏。</p>
+              <div className="flex gap-2">
+                <input
+                  placeholder="https://example.com/cover.jpg（留空则不显示,用三栏布局）"
+                  value={item.coverImg || ''}
+                  onChange={(e) => updateItem(i, 'coverImg', e.target.value)}
+                  className="flex-1 min-w-0 bg-[#161616] border border-white/10 rounded-lg px-4 py-2.5 text-sm text-[#D7E2EA] placeholder:text-white/30 focus:outline-none focus:border-[#4A90FF] transition-colors"
+                />
+                {item.coverImg && <CopyButton value={item.coverImg} />}
+                {item.coverImg && (
+                  <a
+                    href={item.coverImg}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 inline-flex items-center justify-center px-3.5 text-xs font-medium rounded-lg border border-white/10 text-white/60 hover:text-white hover:border-white/30 transition-colors"
+                    title="在新标签打开预览"
+                  >
+                    打开 ↗
+                  </a>
+                )}
+              </div>
+              <GitHubAssetUploader
+                value={item.coverImg || ''}
+                onPicked={(u) => updateItem(i, 'coverImg', u)}
+                label="上传主图到 GitHub"
+              />
+              {item.coverImg && <ImagePreview src={item.coverImg} />}
             </div>
-            <div>
-              <Label>右列大图</Label>
-              <Input value={item.col2Img} onChange={(e) => updateItem(i, 'col2Img', e.target.value)} />
-              <GitHubImageUploader value={item.col2Img} onPicked={(u) => updateItem(i, 'col2Img', u)} />
-              <ImagePreview src={item.col2Img} />
+
+            <div className="sm:col-span-2">
+              <Label>作品图片</Label>
+              <p className="text-xs text-white/40 mb-3">
+                前台点击「LIVE PROJECT」按钮后，会在弹窗里展示这些图片。可上传多张、调整顺序或删除。
+              </p>
+
+              {(item.images ?? []).length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                  {(item.images ?? []).map((src, imgIndex) => (
+                    <div
+                      key={`${src}-${imgIndex}`}
+                      className="group relative rounded-xl overflow-hidden border border-white/10 bg-[#0C0C0C]"
+                    >
+                      <AdminImage
+                        src={src}
+                        alt={`作品 ${imgIndex + 1}`}
+                        className="w-full h-24 sm:h-28 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => moveImage(i, imgIndex, 'up')}
+                          disabled={imgIndex === 0}
+                          className="p-1.5 rounded bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="上移"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveImage(i, imgIndex, 'down')}
+                          disabled={imgIndex === (item.images ?? []).length - 1}
+                          className="p-1.5 rounded bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="下移"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeImage(i, imgIndex)}
+                          className="p-1.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                          title="删除"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <GitHubAssetUploader
+                multiple
+                onPickedBatch={(urls) => addImages(i, urls)}
+                label="批量上传作品图片到 GitHub"
+              />
             </div>
+
+            {/* 三栏旧字段已彻底移除:前端只渲染 coverImg,后台也只剩主图字段,前后端一致 */}
           </div>
           <button onClick={() => removeItem(i)} className="mt-5 text-sm text-red-400 hover:text-red-300">删除项目</button>
         </Card>
@@ -1139,12 +1570,30 @@ const ProjectsEditor = ({ projects, onChange }: { projects: ProjectsContent; onC
 }
 
 const AdminPage = () => {
-  const { content, setFullContent } = useContent()
-  const [draft, setDraft] = useState<SiteContent>(content)
+  const { content, saveContent, saveStatus, saveError } = useContent()
+  // 关键：draft 必须 deep-clone content，不能用 useState(content) 直接传引用，
+  // 否则后续 content 异步更新（比如 GitHub API 拿到数据 setContent）会导致 draft 自动跟着变，
+  // 但 useState 的初始值只在 mount 时取一次。如果初始 content 是 defaultContent（loading 期间），
+  // draft 会一直停在 defaultContent，保存时丢失所有从 GitHub 拿到的字段（如 coverImg）。
+  const [draft, setDraft] = useState<SiteContent>(() => JSON.parse(JSON.stringify(content)))
   const [activeTab, setActiveTab] = useState<TabId>('navbar')
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  // 当 content 异步更新（GitHub API 拿到数据 / 用户点取消）时，同步 draft 完整快照。
+  // 用 ref + JSON 比对避免不必要的重渲染。
+  const lastSyncedContent = useRef<string>(JSON.stringify(content))
   useEffect(() => {
-    setDraft(content)
+    const sig = JSON.stringify(content)
+    if (sig !== lastSyncedContent.current) {
+      lastSyncedContent.current = sig
+      // 只在没有未保存修改时才覆盖 draft（避免用户编辑被异步 content 更新吞掉）
+      setDraft((prev) => {
+        if (JSON.stringify(prev) !== JSON.stringify(content)) {
+          // 有未保存修改 → 提示用户但不覆盖
+          return prev
+        }
+        return JSON.parse(sig)
+      })
+    }
   }, [content])
 
   const hasChanges = JSON.stringify(draft) !== JSON.stringify(content)
@@ -1153,8 +1602,8 @@ const AdminPage = () => {
     setDraft(prev => ({ ...prev, [section]: value }))
   }
 
-  const handleSave = () => {
-    setFullContent(draft)
+  const handleSave = async () => {
+    await saveContent(draft)
   }
 
   const handleCancel = () => {
@@ -1172,21 +1621,69 @@ const AdminPage = () => {
     URL.revokeObjectURL(url)
   }
 
+  // 尝试清理用户从笔记/编辑器里复制出来的“类 JSON”内容：
+  // 去掉 // 行注释、/* */ 块注释、# 开头的 YAML/配置行，以及行尾多余逗号。
+  const sanitizeJsonLike = (input: string): string => {
+    return input
+      .replace(/^\uFEFF/, '')
+      .split('\n')
+      .map((line) => {
+        const trimmed = line.trim()
+        if (trimmed.startsWith('#')) return ''
+        // 去掉行尾 // 注释（粗略但足够处理备份场景）
+        const idx = line.indexOf(' // ')
+        return idx >= 0 ? line.slice(0, idx) : line
+      })
+      .join('\n')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/,(\s*[}\]])/g, '$1')
+  }
+
   // 从 JSON 文件导入并立即生效（恢复备份）
   const fileInputRef = useRef<HTMLInputElement>(null)
   const handleImportClick = () => fileInputRef.current?.click()
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    // 文件扩展名校验：必须是 .json
+    if (!file.name.toLowerCase().endsWith('.json')) {
+      alert(`导入失败：请选择 .json 文件。当前文件是 "${file.name}"。`)
+      e.target.value = ''
+      return
+    }
     const reader = new FileReader()
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
-        const data = JSON.parse(String(reader.result))
+        let raw = String(reader.result).replace(/^\uFEFF/, '')
+        if (!raw.trim()) throw new Error('文件内容为空')
+
+        let data: unknown
+        try {
+          data = JSON.parse(raw)
+        } catch (firstErr: unknown) {
+          // 第一次解析失败，尝试清理注释/YAML标记后再解析
+          const cleaned = sanitizeJsonLike(raw)
+          try {
+            data = JSON.parse(cleaned)
+          } catch {
+            const firstMsg = firstErr instanceof Error ? firstErr.message : String(firstErr)
+            throw new Error(`JSON 解析失败。${firstMsg}。请确认文件是本后台「导出」的备份，且未被其他编辑器加入注释或 YAML 内容。`)
+          }
+        }
+
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          throw new Error('JSON 内容不是一个有效的对象')
+        }
         const merged = mergeWithDefault(data)
         setDraft(merged)
-        setFullContent(merged)
-      } catch {
-        alert('文件格式错误，请选择有效的 JSON 备份文件')
+        // 导入后必须持久化，否则刷新会从 GitHub/本地缓存重新加载旧数据
+        const ok = await saveContent(merged)
+        if (!ok) {
+          throw new Error('导入内容已加载到后台，但保存到 GitHub 失败。请检查网络或重新加载页面后再试。')
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err)
+        alert(`导入失败：${msg}`)
       }
     }
     reader.readAsText(file)
@@ -1217,6 +1714,24 @@ const AdminPage = () => {
 
   return (
     <div className="min-h-screen bg-[#0C0C0C] text-[#D7E2EA] font-sans">
+      {saveStatus !== 'idle' && (
+        <div
+          style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}
+          className={`px-5 py-3 rounded-full text-sm font-medium shadow-lg ${
+            saveStatus === 'saving'
+              ? 'bg-white/15 text-white/80'
+              : saveStatus === 'success'
+                ? 'bg-green-500/90 text-white'
+                : 'bg-red-500/90 text-white'
+          }`}
+        >
+          {saveStatus === 'saving'
+            ? '保存中…'
+            : saveStatus === 'success'
+              ? '✅ 保存成功'
+              : `❌ 保存失败：${saveError}`}
+        </div>
+      )}
       <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between sticky top-0 bg-[#0C0C0C]/95 backdrop-blur z-20">
         <h1 className="text-xl sm:text-2xl font-bold">后台管理</h1>
         <div className="flex items-center gap-3 sm:gap-4">
