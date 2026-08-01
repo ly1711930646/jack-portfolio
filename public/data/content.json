@@ -295,12 +295,30 @@
       },
       {
         "number": "1-4",
-        "name": " 智能手表  —  KOSPET Pulse ",
+        "name": " 智能手表  —  KOSPET MAGIC R10",
         "category": "独立站-网页设计",
         "tags": [
           "UI设计"
         ],
-        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785401836629-hdzwi1.jpg"
+        "coverImg": "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785401836629-hdzwi1.jpg",
+        "images": [
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555050805-8c7kkk.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555063865-pxd7wv.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555070282-74elox.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555083634-j3pqq9.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555117454-s3ke0n.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555124406-mb6o2v.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555132218-6g2rf3.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555139345-8l9llk.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555146886-60w4da.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555153569-oqi6o4.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555161491-8ps5ye.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555167787-l8bovb.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555174556-t7zozw.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555181645-etkrr3.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555202092-6h1l9v.jpg",
+          "https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/1785555208578-qo58nt.jpg"
+        ]
       },
       {
         "number": "1-5",
