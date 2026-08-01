@@ -78,14 +78,12 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
     })
   }
 
-  // 弹窗外壳动画：shakeTick 变化时触发水平抖动
+  // 弹窗外壳动画：渐入渐出 + shakeTick 变化时触发水平抖动
   const shellAnimate = useMemo(
     () => ({
       opacity: 1,
       scale: 1,
       y: 0,
-      rotateX: 0,
-      rotateY: 0,
       x: shakeTick > 0 ? [0, -12, 12, -9, 9, -5, 5, -2, 2, 0] : 0,
     }),
     [shakeTick],
@@ -204,29 +202,20 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
         aria-hidden="true"
       />
 
-      {/* 弹窗主体：打开时平滑展开，关闭时像书页向右侧折叠收起 */}
+      {/* 弹窗主体：打开/关闭均为渐入渐出 */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.88, y: 30, rotateX: -10 }}
+        initial={{ opacity: 0, scale: 0.98 }}
         animate={shellAnimate}
-        exit={{
-          opacity: [1, 0.95, 0.78, 0],
-          scale: [1, 0.92, 0.46, 0.16],
-          rotateY: [0, -26, -84, -102],
-          rotateX: [0, 4, 8, 10],
-        }}
+        exit={{ opacity: 0, scale: 0.98 }}
         transition={{
           opacity: { duration: 0.4, ease: 'easeOut' },
-          scale: { duration: 0.72, times: [0, 0.14, 0.55, 1], ease: [0.25, 0.46, 0.45, 0.94] },
-          rotateY: { duration: 0.72, times: [0, 0.14, 0.55, 1], ease: [0.25, 0.46, 0.45, 0.94] },
-          rotateX: { duration: 0.72, times: [0, 0.14, 0.55, 1], ease: [0.25, 0.46, 0.45, 0.94] },
-          y: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.4, ease: 'easeOut' },
+          y: { duration: 0.4, ease: 'easeOut' },
           x: { duration: 0.42, ease: 'easeInOut' },
         }}
         className="modal-shell relative z-10 flex h-full max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[24px] sm:rounded-[32px] md:rounded-[40px] border border-white/10 bg-[#0C0C0C] shadow-2xl"
         style={{
           willChange: 'transform, opacity',
-          transformOrigin: 'center right',
-          transformStyle: 'preserve-3d',
         }}
         onClick={(e) => e.stopPropagation()}
       >

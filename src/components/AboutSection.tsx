@@ -158,18 +158,13 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
       </AnimatePresence>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.85, x: 40, rotateY: 26 }}
-        animate={{ opacity: 1, scale: 1, x: 0, y: 0, rotateX: 0, rotateY: 0 }}
-        exit={{
-          opacity: [1, 0.95, 0.78, 0],
-          scale: [1, 0.92, 0.46, 0.16],
-          rotateY: [0, -26, -84, -102],
-          rotateX: [0, 4, 8, 10],
-        }}
-        transition={{ duration: 0.72, times: [0, 0.14, 0.55, 1], ease: [0.25, 0.46, 0.45, 0.94] }}
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.98 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
         ref={modalRef}
         className="relative w-full max-w-4xl xl:max-w-5xl bg-[#0f0f0f] border border-white/[0.06] rounded-[2rem] shadow-2xl overflow-hidden max-h-[92vh] modal-shell"
-        style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d', transformOrigin: 'center right' }}
+        style={{ willChange: 'transform, opacity' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 跟随鼠标的边框光晕 */}
