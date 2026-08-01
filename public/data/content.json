@@ -26,7 +26,7 @@
     "ctaText": "查看资料",
     "title": "Hi, i'm 李杨",
     "subtitle": "a 3d creator driven by crafting striking and unforgettable projects",
-    "portraitImage": "assets/uploads/1784053592568-552htg.jpg",
+    "portraitImage": "/jack-portfolio/assets/uploads/1784053592568-552htg.jpg",
     "bannerImage": "",
     "bannerVideo": "/jack-portfolio/assets/uploads/1785558951418-7kzsjh.mp4",
     "bannerText": "看见，不止于想象",
@@ -260,11 +260,11 @@
           "跨境电商"
         ],
         "images": [
-          "/jack-portfolio/assets/uploads/1785433342907-iyh211.png",
-          "/jack-portfolio/assets/uploads/1785394249365-0x9lih.png",
-          "/jack-portfolio/assets/uploads/1785394255816-2otwqr.png",
-          "/jack-portfolio/assets/uploads/1785394262253-hcr7cu.png",
-          "/jack-portfolio/assets/uploads/1785394271862-d1iyq8.png"
+          "/jack-portfolio/assets/uploads/1785573044192-3jh6hg.png",
+          "/jack-portfolio/assets/uploads/1785573046679-tudl1z.png",
+          "/jack-portfolio/assets/uploads/1785573050533-84s7ky.png",
+          "/jack-portfolio/assets/uploads/1785573053595-fd2g9n.png",
+          "/jack-portfolio/assets/uploads/1785573058732-w94p5h.png"
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1785400888455-1uq6od.jpg"
       },
@@ -276,7 +276,11 @@
           "跨境电商"
         ],
         "images": [
-          "/jack-portfolio/assets/uploads/1785562048339-dtpx6t.png"
+          "/jack-portfolio/assets/uploads/1785572787800-hb8b2b.png",
+          "/jack-portfolio/assets/uploads/1785572791510-z95vqt.png",
+          "/jack-portfolio/assets/uploads/1785572799382-36w6gr.png",
+          "/jack-portfolio/assets/uploads/1785572807208-z9v8jb.png",
+          "/jack-portfolio/assets/uploads/1785572810933-84p69i.png"
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1785395427470-059qw5.jpg"
       },
@@ -296,7 +300,25 @@
         "tags": [
           "UI设计"
         ],
-        "coverImg": "/jack-portfolio/assets/uploads/1785401836629-hdzwi1.jpg"
+        "coverImg": "/jack-portfolio/assets/uploads/1785401836629-hdzwi1.jpg",
+        "images": [
+          "/jack-portfolio/assets/uploads/1785572878945-5wh1ev.jpg",
+          "/jack-portfolio/assets/uploads/1785572890344-nty75i.jpg",
+          "/jack-portfolio/assets/uploads/1785572898545-58j9gk.jpg",
+          "/jack-portfolio/assets/uploads/1785572902014-ax9ddn.jpg",
+          "/jack-portfolio/assets/uploads/1785572904965-2peetf.jpg",
+          "/jack-portfolio/assets/uploads/1785572907883-pl2pix.jpg",
+          "/jack-portfolio/assets/uploads/1785572912840-cjkmrq.jpg",
+          "/jack-portfolio/assets/uploads/1785572916320-fzq4xf.jpg",
+          "/jack-portfolio/assets/uploads/1785572919767-n34dg6.jpg",
+          "/jack-portfolio/assets/uploads/1785572923100-2idsz6.jpg",
+          "/jack-portfolio/assets/uploads/1785572927889-apoy45.jpg",
+          "/jack-portfolio/assets/uploads/1785572931262-xvlrvj.jpg",
+          "/jack-portfolio/assets/uploads/1785572937623-9p12r1.jpg",
+          "/jack-portfolio/assets/uploads/1785572943620-m160o6.jpg",
+          "/jack-portfolio/assets/uploads/1785572951462-121akr.jpg",
+          "/jack-portfolio/assets/uploads/1785572955410-stphp9.jpg"
+        ]
       },
       {
         "number": "1-5",
@@ -307,17 +329,17 @@
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1785401977868-5vn49k.png",
         "images": [
-          "/jack-portfolio/assets/uploads/1785401984036-za5q3s.png",
-          "/jack-portfolio/assets/uploads/1785401990839-bjf5jz.png",
-          "/jack-portfolio/assets/uploads/1785401999539-8g3a9l.png",
-          "/jack-portfolio/assets/uploads/1785402005753-aba6dp.png",
-          "/jack-portfolio/assets/uploads/1785402013152-nca2be.png",
-          "/jack-portfolio/assets/uploads/1785402021213-ra7353.png",
-          "/jack-portfolio/assets/uploads/1785402045386-msrkg2.png",
-          "/jack-portfolio/assets/uploads/1785402053133-ps6aia.png",
-          "/jack-portfolio/assets/uploads/1785433234545-8x4xgu.png",
-          "/jack-portfolio/assets/uploads/1785402067775-ukiezt.png",
-          "/jack-portfolio/assets/uploads/1785402074466-qg5vt5.png"
+          "/jack-portfolio/assets/uploads/1785573126087-bxy8kv.png",
+          "/jack-portfolio/assets/uploads/1785573129133-zacsk1.png",
+          "/jack-portfolio/assets/uploads/1785573132047-7i0ho4.png",
+          "/jack-portfolio/assets/uploads/1785573134760-0442uo.png",
+          "/jack-portfolio/assets/uploads/1785573137675-vdcdl9.png",
+          "/jack-portfolio/assets/uploads/1785573140238-ordoj7.png",
+          "/jack-portfolio/assets/uploads/1785573143536-ufyh0v.png",
+          "/jack-portfolio/assets/uploads/1785573146032-trq81x.png",
+          "/jack-portfolio/assets/uploads/1785573149091-wjy2od.png",
+          "/jack-portfolio/assets/uploads/1785573152111-zri7k8.png",
+          "/jack-portfolio/assets/uploads/1785573156193-1qcn9f.png"
         ]
       },
       {
@@ -329,26 +351,26 @@
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1785412469777-450ue8.jpg",
         "images": [
-          "/jack-portfolio/assets/uploads/1785412160998-o1d5oi.jpg",
-          "/jack-portfolio/assets/uploads/1785412192774-svyrcc.jpg",
-          "/jack-portfolio/assets/uploads/1785412199909-vzzv1t.jpg",
-          "/jack-portfolio/assets/uploads/1785412207925-22jff2.jpg",
-          "/jack-portfolio/assets/uploads/1785412216362-g15vkh.jpg",
-          "/jack-portfolio/assets/uploads/1785412228746-y4q8bg.jpg",
-          "/jack-portfolio/assets/uploads/1785412258906-t5wuwj.jpg",
-          "/jack-portfolio/assets/uploads/1785412264987-3xhg1j.jpg",
-          "/jack-portfolio/assets/uploads/1785412282879-73dt2r.jpg",
-          "/jack-portfolio/assets/uploads/1785412293309-ht0xfx.jpg",
-          "/jack-portfolio/assets/uploads/1785412303119-f0ue15.jpg",
-          "/jack-portfolio/assets/uploads/1785412329606-dvy9ly.jpg",
-          "/jack-portfolio/assets/uploads/1785412343417-s9xjdx.jpg",
-          "/jack-portfolio/assets/uploads/1785412358183-8v6zce.jpg",
-          "/jack-portfolio/assets/uploads/1785412375295-pe3q5e.jpg",
-          "/jack-portfolio/assets/uploads/1785412388791-kn4tje.jpg",
-          "/jack-portfolio/assets/uploads/1785412398949-rmpxbo.jpg",
-          "/jack-portfolio/assets/uploads/1785412409856-txhtba.jpg",
-          "/jack-portfolio/assets/uploads/1785412421953-w8jlj6.jpg",
-          "/jack-portfolio/assets/uploads/1785412432076-qnbowx.jpg"
+          "/jack-portfolio/assets/uploads/1785573266491-29yalp.jpg",
+          "/jack-portfolio/assets/uploads/1785573270250-el7keb.jpg",
+          "/jack-portfolio/assets/uploads/1785573273686-f1vh1o.jpg",
+          "/jack-portfolio/assets/uploads/1785573277527-eh4vrn.jpg",
+          "/jack-portfolio/assets/uploads/1785573281513-uwaq9a.jpg",
+          "/jack-portfolio/assets/uploads/1785573286842-msr9qa.jpg",
+          "/jack-portfolio/assets/uploads/1785573291035-sn83c8.jpg",
+          "/jack-portfolio/assets/uploads/1785573294052-hx6p8h.jpg",
+          "/jack-portfolio/assets/uploads/1785573296528-uecw2o.jpg",
+          "/jack-portfolio/assets/uploads/1785573299378-3iye1m.jpg",
+          "/jack-portfolio/assets/uploads/1785573302706-edknkg.jpg",
+          "/jack-portfolio/assets/uploads/1785573305725-nqk1gv.jpg",
+          "/jack-portfolio/assets/uploads/1785573308599-dg3fxm.jpg",
+          "/jack-portfolio/assets/uploads/1785573311601-jczrem.jpg",
+          "/jack-portfolio/assets/uploads/1785573320554-zsmetq.jpg",
+          "/jack-portfolio/assets/uploads/1785573326571-l60j7u.jpg",
+          "/jack-portfolio/assets/uploads/1785573333105-lqz3fo.jpg",
+          "/jack-portfolio/assets/uploads/1785573336140-rcbpz5.jpg",
+          "/jack-portfolio/assets/uploads/1785573339527-y22zuh.jpg",
+          "/jack-portfolio/assets/uploads/1785573342569-0mzhbn.jpg"
         ]
       },
       {
@@ -359,7 +381,7 @@
           "国内电商"
         ],
         "images": [
-          "/jack-portfolio/assets/uploads/1785416984120-x4loqr.jpg"
+          "/jack-portfolio/assets/uploads/1785572982967-o0s9td.jpg"
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1785425085265-bnmvu2.png"
       },
@@ -388,9 +410,7 @@
           "/jack-portfolio/assets/uploads/1785427685807-batjop.png",
           "/jack-portfolio/assets/uploads/1785427694471-8nwhj7.png",
           "/jack-portfolio/assets/uploads/1785427704939-um4gte.png",
-          "/jack-portfolio/assets/uploads/1785427713503-eh6og9.png",
-          "/jack-portfolio/assets/uploads/1785427730334-kcaxge.png",
-          "/jack-portfolio/assets/uploads/1785427736631-9frbli.png"
+          "/jack-portfolio/assets/uploads/1785427713503-eh6og9.png"
         ]
       },
       {
