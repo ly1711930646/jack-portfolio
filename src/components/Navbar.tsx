@@ -68,7 +68,23 @@ const Navbar = () => {
   }
 
   const handleLiquidMetalProfile = () => {
-    openProfile()
+    const el = document.querySelector('#about')
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY
+      const needsScroll = Math.abs(window.scrollY - top) > 50
+      setActiveId('about')
+      setLockedId('about')
+      setTimeout(() => setLockedId(null), 1400)
+      window.scrollTo({ top, behavior: 'smooth' })
+
+      if (needsScroll) {
+        setTimeout(() => openProfile(), 900)
+      } else {
+        openProfile()
+      }
+    } else {
+      openProfile()
+    }
   }
 
   return (
