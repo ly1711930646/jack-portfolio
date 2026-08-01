@@ -137,19 +137,19 @@ const ProfileModal = ({ profile, onClose }: { profile: AboutContent['profile']; 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      transition={{ duration: 0.45, ease: 'easeOut' }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/70 backdrop-blur-md"
       onClick={triggerHint}
-      style={{ willChange: 'opacity' }}
+      style={{ willChange: 'opacity', perspective: '1200px' }}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 32 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 16 }}
-        transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0, scale: 0.9, y: 32, rotateX: -8 }}
+        animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+        exit={{ opacity: 0, scale: 0.78, y: -28, rotateX: 12, rotateY: -6 }}
+        transition={{ duration: 0.5, ease: [0.32, 0, 0.67, 0] }}
         ref={modalRef}
-        className="relative w-full max-w-4xl xl:max-w-5xl bg-[#0f0f0f] border border-white/[0.06] rounded-[2rem] shadow-2xl overflow-hidden max-h-[92vh] modal-shell"
-        style={{ willChange: 'transform, opacity' }}
+        className="relative w-full max-w-4xl xl:max-w-5xl bg-[#0f0f0f] border border-white/[0.06] rounded-[2rem] shadow-2xl overflow-hidden max-h-[92vh] modal-shell origin-top-right"
+        style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 跟随鼠标的边框光晕 */}
