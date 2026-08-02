@@ -1,6 +1,6 @@
 import { useContent } from '../context/ContentContext'
 import { SmartImage } from './SmartImage'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import VaporizeTextCycle, { Tag } from './VaporizeTextCycle'
 
 const TRAIL_EMOJIS = ['🔥', '✨', '⚡', '💫', '🌟', '💡', '🎨', '🚀', '🌈', '💥', '🪐', '⭐']
@@ -119,15 +119,28 @@ const BannerMedia = ({ hero }: { hero: import('../content/siteContent').HeroCont
   )
 }
 
+// 把本仓库 uploads 路径映射到 jsDelivr CDN：
+// GitHub Pages/Fastly 对 <video> 的 range 请求极不稳定（readyState 长期为 0），
+// jsDelivr 支持 206 range、国内访问更快，视频才能正常加载播放。
+const toCdnVideoUrl = (src: string): string => {
+  if (!src) return src
+  const match = src.match(/\/jack-portfolio\/assets\/uploads\/([^/]+\.mp4)$/i)
+  if (match) {
+    return `https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/${match[1]}`
+  }
+  return src
+}
+
 const BannerVideo = ({ src, fallback }: { src: string; fallback?: string }) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [failed, setFailed] = useState(false)
+  const cdnSrc = useMemo(() => toCdnVideoUrl(src), [src])
 
   useEffect(() => {
     const video = videoRef.current
-    if (!video || !src) return
+    if (!video || !cdnSrc) return
 
-    const isM3U8 = src.endsWith('.m3u8') || src.includes('.m3u8')
+    const isM3U8 = cdnSrc.endsWith('.m3u8') || cdnSrc.includes('.m3u8')
     let destroyed = false
     let cleanup: (() => void) | undefined
 
@@ -162,17 +175,16 @@ const BannerVideo = ({ src, fallback }: { src: string; fallback?: string }) => {
       }
 
       // Native HLS (Safari) or non-M3U8 video
-      video.src = src
+      video.src = cdnSrc
       video.play().catch(() => {})
 
-      // GitHub Pages/Fastly 对 <video> 的 range 请求支持不稳定，
-      // 常出现请求发出但长时间 readyState=0 的情况（fetch 同一 URL 却正常）。
-      // 兜底：3 秒后若仍无数据，用 fetch 拉完整 blob 走 objectURL 播放。
+      // jsDelivr 已能解决 range 问题；兜底保留：3 秒后若仍无数据，
+      // 用 fetch 拉完整 blob 走 objectURL 播放。
       let blobUrl: string | undefined
       const fallbackTimer = window.setTimeout(async () => {
         if (destroyed || video.readyState >= 2 || !video.src) return
         try {
-          const res = await fetch(src, { cache: 'no-store' })
+          const res = await fetch(cdnSrc, { cache: 'no-store' })
           if (!res.ok) return
           const blob = await res.blob()
           blobUrl = URL.createObjectURL(blob)
@@ -188,7 +200,7 @@ const BannerVideo = ({ src, fallback }: { src: string; fallback?: string }) => {
       }, 3000)
 
       const onError = () => {
-        console.error('Video failed to load:', src)
+        console.error('Video failed to load:', cdnSrc)
         setFailed(true)
       }
       video.addEventListener('error', onError)
@@ -215,7 +227,7 @@ const BannerVideo = ({ src, fallback }: { src: string; fallback?: string }) => {
       }
       cleanup?.()
     }
-  }, [src])
+  }, [cdnSrc])
 
   // If video fails to load and we have a fallback image, show it instead
   if (failed && fallback) {
