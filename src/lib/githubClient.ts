@@ -1,6 +1,7 @@
 import { githubConfig, toServedUrl } from '../github-config'
-import { isCosReady, uploadToCos } from './cosClient'
 
+// 注意：cosClient（cos-js-sdk-v5，体积较大）按需动态加载，
+// 仅在后台上传图片/视频时才会 import，避免它被打进首屏主包拖慢加载。
 const API = 'https://api.github.com'
 
 // UTF-8 安全的 base64 编码（用于把 JSON / 二进制塞进 GitHub Contents API）
@@ -100,8 +101,12 @@ export const fetchImageBlobUrl = async (url: string): Promise<string> => {
 // 浏览器直传图片到 GitHub 仓库（public/assets/uploads），返回 jsDelivr 绝对地址
 // 上传后无需重新部署，国内可直接从该 CDN 地址显示。
 export const uploadImage = async (file: File, prefix = 'uploads'): Promise<string> => {
-  // 优先直传腾讯云 COS（链接稳定、国内直连、与部署沙箱解耦）
-  if (isCosReady()) return uploadToCos(file, prefix)
+  // 优先直传腾讯云 COS（链接稳定、国内直连、与部署沙箱解耦）。
+  // cos-js-sdk-v5 体积较大，仅在确实需要上传时才动态加载，避免污染首屏主包。
+  if (typeof window !== 'undefined') {
+    const { isCosReady, uploadToCos } = await import('./cosClient')
+    if (isCosReady()) return uploadToCos(file, prefix)
+  }
   if (!githubConfig.enabled) throw new Error('GitHub 未配置')
   if (!file.type.startsWith('image/')) throw new Error('请选择图片文件')
 
@@ -134,8 +139,12 @@ export const uploadImage = async (file: File, prefix = 'uploads'): Promise<strin
 // 浏览器直传视频到 GitHub 仓库（与图片共用 uploads 目录），返回 jsDelivr 绝对地址。
 // 视频文件通常较大（10-50MB），base64 编码再增 33%，单文件建议控制在 50MB 以内。
 export const uploadVideo = async (file: File, prefix = 'uploads'): Promise<string> => {
-  // 优先直传腾讯云 COS（链接稳定、国内直连、与部署沙箱解耦）
-  if (isCosReady()) return uploadToCos(file, prefix)
+  // 优先直传腾讯云 COS（链接稳定、国内直连、与部署沙箱解耦）。
+  // cos-js-sdk-v5 体积较大，仅在确实需要上传时才动态加载，避免污染首屏主包。
+  if (typeof window !== 'undefined') {
+    const { isCosReady, uploadToCos } = await import('./cosClient')
+    if (isCosReady()) return uploadToCos(file, prefix)
+  }
   if (!githubConfig.enabled) throw new Error('GitHub 未配置')
   if (!file.type.startsWith('video/')) throw new Error('请选择视频文件')
 

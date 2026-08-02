@@ -10,8 +10,41 @@
     <meta http-equiv="Expires" content="0" />
     <title>李杨 -- 3D Creator</title>
     <script>
-      // 把致命 JS 错误显示出来，便于用户第一时间反馈
+      // 把致命 JS 错误显示出来，便于用户第一时间反馈。
+      // 关键优化：应用已成功挂载时，只追加一个「可关闭的报错条」，绝不再清空整页——
+      // 否则动画/视频里一个瞬时异常就会让整站「突然蹦掉」成白/红错误页。
       window.__pageErrors = []
+      function showErrors () {
+        try {
+          var root = document.getElementById('root')
+          var html = window.__pageErrors.map(function (e) { return JSON.stringify(e, null, 2) }).join('\n---\n')
+          // 应用根本没挂载（root 为空）：整页报错，便于看到启动失败原因
+          if (!root || !root.childElementCount) {
+            if (root) root.innerHTML = '<div style="color:#ff6b6b;background:#0c0c0c;padding:24px;font-family:monospace;white-space:pre-wrap;word-break:break-all;"><h2>页面加载出错</h2>' + html + '</div>'
+            return
+          }
+          // 应用已挂载：仅追加可关闭报错条，保留页面内容
+          var bar = document.getElementById('__pageErrorBar')
+          if (bar) {
+            bar.querySelector('pre').textContent = html
+            bar.style.display = 'block'
+            return
+          }
+          bar = document.createElement('div')
+          bar.id = '__pageErrorBar'
+          bar.setAttribute('style', 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:rgba(58,13,13,0.96);color:#ff9b9b;font:12px/1.45 monospace;padding:10px 36px 10px 12px;max-height:42vh;overflow:auto;border-top:1px solid #ff6b6b;white-space:pre-wrap;word-break:break-all;')
+          var pre = document.createElement('pre')
+          pre.textContent = html
+          pre.setAttribute('style', 'margin:0')
+          var close = document.createElement('button')
+          close.textContent = '×'
+          close.setAttribute('style', 'position:absolute;top:4px;right:10px;background:none;border:none;color:#ff9b9b;font-size:18px;line-height:1;cursor:pointer;')
+          close.onclick = function () { bar.style.display = 'none' }
+          bar.appendChild(close)
+          bar.appendChild(pre)
+          document.body.appendChild(bar)
+        } catch (_) { /* 兜底：不要再因报错处理本身抛出异常 */ }
+      }
       window.onerror = function (msg, url, line, col, err) {
         window.__pageErrors.push({ type: 'error', msg: msg, url: url, line: line, col: col, stack: err && err.stack })
         showErrors()
@@ -20,11 +53,6 @@
         window.__pageErrors.push({ type: 'rejection', reason: String(e.reason), stack: e.reason && e.reason.stack })
         showErrors()
       })
-      function showErrors () {
-        var root = document.getElementById('root')
-        if (!root) return
-        root.innerHTML = '<div style="color:#ff6b6b;background:#0c0c0c;padding:24px;font-family:monospace;white-space:pre-wrap;word-break:break-all;"><h2>页面加载出错</h2>' + window.__pageErrors.map(function (e) { return JSON.stringify(e, null, 2) }).join('\n---\n') + '</div>'
-      }
     </script>
   </head>
   <body>

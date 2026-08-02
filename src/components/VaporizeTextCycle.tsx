@@ -148,7 +148,9 @@ export default function VaporizeTextCycle({
 
   const globalDpr = useMemo(() => {
     if (typeof window !== 'undefined') {
-      return window.devicePixelRatio || 1
+      // 限制上限为 2：全屏 canvas 按 devicePixelRatio 放大后像素量随 DPR 平方增长，
+      // 3x 屏的 clearRect / 重绘成本极高；2x 已足够清晰，且能大幅降低 GPU 负载与崩页风险。
+      return Math.min(window.devicePixelRatio || 1, 2)
     }
     return 1
   }, [])
@@ -429,6 +431,11 @@ export default function VaporizeTextCycle({
   )
 
   useEffect(() => {
+    // 系统开启「减少动态效果」时，始终静态展示文字，不触发消散动画与烟花
+    if (prefersReducedMotion()) {
+      setAnimationState('static')
+      return
+    }
     if (interactive) {
       // 交互模式：
       // - 鼠标首次移入文字区域：触发一次粒子消散动画
@@ -469,95 +476,119 @@ export default function VaporizeTextCycle({
     let frameId: number
 
     const animate = (currentTime: number) => {
-      const deltaTime = (currentTime - lastTime) / 1000
-      lastTime = currentTime
-
-      // 交互模式下不要在每帧打断动画，让首次触发后的整轮播放走完
-
-      const canvas = canvasRef.current
-      const ctx = canvas?.getContext('2d')
-
-      if (!canvas || !ctx || !particlesRef.current.length) {
+      // 标签页不可见时跳过整屏重绘，避免后台持续占满 CPU/GPU
+      if (typeof document !== 'undefined' && document.hidden) {
         frameId = requestAnimationFrame(animate)
         return
       }
+      try {
+        const deltaTime = (currentTime - lastTime) / 1000
+        lastTime = currentTime
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+        // 交互模式下不要在每帧打断动画，让首次触发后的整轮播放走完
 
-      switch (animationState) {
-        case 'static': {
-          memoizedRenderParticles(ctx, particlesRef.current)
-          break
+        const canvas = canvasRef.current
+        const ctx = canvas?.getContext('2d')
+
+        if (!canvas || !ctx || !particlesRef.current.length) {
+          frameId = requestAnimationFrame(animate)
+          return
         }
-        case 'vaporizing': {
-          vaporizeProgressRef.current += (deltaTime * 100) / (animationDurations.VAPORIZE_DURATION / 1000)
 
-          const textBoundaries = canvas.textBoundaries
-          if (!textBoundaries) break
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-          const progress = Math.min(100, vaporizeProgressRef.current)
-          const vaporizeX =
-            direction === 'left-to-right'
-              ? textBoundaries.left + (textBoundaries.width * progress) / 100
-              : textBoundaries.right - (textBoundaries.width * progress) / 100
-
-          const allVaporized = memoizedUpdateParticles(particlesRef.current, vaporizeX, deltaTime)
-          memoizedRenderParticles(ctx, particlesRef.current)
-
-          if (vaporizeProgressRef.current >= 100 && allVaporized) {
-            setCurrentTextIndex((prevIndex) => (prevIndex + 1) % texts.length)
-            setAnimationState('fadingIn')
-            fadeOpacityRef.current = 0
+        switch (animationState) {
+          case 'static': {
+            memoizedRenderParticles(ctx, particlesRef.current)
+            break
           }
-          break
-        }
-        case 'fadingIn': {
-          fadeOpacityRef.current += (deltaTime * 1000) / animationDurations.FADE_IN_DURATION
+          case 'vaporizing': {
+            vaporizeProgressRef.current += (deltaTime * 100) / (animationDurations.VAPORIZE_DURATION / 1000)
 
-          ctx.save()
-          ctx.scale(globalDpr, globalDpr)
-          particlesRef.current.forEach((particle) => {
-            particle.x = particle.originalX
-            particle.y = particle.originalY
-            const opacity = Math.min(fadeOpacityRef.current, 1) * particle.originalAlpha
-            const color = particle.color.replace(/[\d.]+\)$/, `${opacity})`)
-            ctx.fillStyle = color
-            ctx.fillRect(particle.x / globalDpr, particle.y / globalDpr, 1, 1)
-          })
-          ctx.restore()
+            const textBoundaries = canvas.textBoundaries
+            if (!textBoundaries) break
 
-          if (fadeOpacityRef.current >= 1) {
-            // 交互模式（动画已触发过）：跳过 waiting，直接进 static，
-            // 避免 waiting 阶段 particle.opacity 仍是 0 导致文字闪烁
-            if (interactive && hasAnimatedRef.current) {
-              resetParticles(particlesRef.current)
-              // 重置标记，允许用户下次重新移入时再次触发
-              hasAnimatedRef.current = false
-              setAnimationState('static')
-            } else {
-              setAnimationState('waiting')
-              setTimeout(() => {
-                setAnimationState('vaporizing')
-                vaporizeProgressRef.current = 0
-                resetParticles(particlesRef.current)
-              }, animationDurations.WAIT_DURATION)
+            const progress = Math.min(100, vaporizeProgressRef.current)
+            const vaporizeX =
+              direction === 'left-to-right'
+                ? textBoundaries.left + (textBoundaries.width * progress) / 100
+                : textBoundaries.right - (textBoundaries.width * progress) / 100
+
+            const allVaporized = memoizedUpdateParticles(particlesRef.current, vaporizeX, deltaTime)
+            memoizedRenderParticles(ctx, particlesRef.current)
+
+            if (vaporizeProgressRef.current >= 100 && allVaporized) {
+              setCurrentTextIndex((prevIndex) => (prevIndex + 1) % texts.length)
+              setAnimationState('fadingIn')
+              fadeOpacityRef.current = 0
             }
+            break
           }
-          break
+          case 'fadingIn': {
+            fadeOpacityRef.current += (deltaTime * 1000) / animationDurations.FADE_IN_DURATION
+
+            ctx.save()
+            ctx.scale(globalDpr, globalDpr)
+            particlesRef.current.forEach((particle) => {
+              particle.x = particle.originalX
+              particle.y = particle.originalY
+              const opacity = Math.min(fadeOpacityRef.current, 1) * particle.originalAlpha
+              const color = particle.color.replace(/[\d.]+\)$/, `${opacity})`)
+              ctx.fillStyle = color
+              ctx.fillRect(particle.x / globalDpr, particle.y / globalDpr, 1, 1)
+            })
+            ctx.restore()
+
+            if (fadeOpacityRef.current >= 1) {
+              // 交互模式（动画已触发过）：跳过 waiting，直接进 static，
+              // 避免 waiting 阶段 particle.opacity 仍是 0 导致文字闪烁
+              if (interactive && hasAnimatedRef.current) {
+                resetParticles(particlesRef.current)
+                // 重置标记，允许用户下次重新移入时再次触发
+                hasAnimatedRef.current = false
+                setAnimationState('static')
+              } else {
+                setAnimationState('waiting')
+                setTimeout(() => {
+                  setAnimationState('vaporizing')
+                  vaporizeProgressRef.current = 0
+                  resetParticles(particlesRef.current)
+                }, animationDurations.WAIT_DURATION)
+              }
+            }
+            break
+          }
+          case 'waiting': {
+            memoizedRenderParticles(ctx, particlesRef.current)
+            break
+          }
         }
-        case 'waiting': {
-          memoizedRenderParticles(ctx, particlesRef.current)
-          break
+
+        updateFireworks()
+        renderFireworks(ctx)
+
+        // 空闲时暂停循环：没有正在进行的文字动画、也没有存活的烟花时，
+        // 不再每帧重绘整屏 canvas（这是之前卡顿/崩页的主因）。
+        const fireworksAlive =
+          fireworksRef.current.rockets.length > 0 ||
+          fireworksRef.current.particles.length > 0 ||
+          fireworksRef.current.flashes.length > 0
+        const animating = animationState === 'vaporizing' || animationState === 'fadingIn'
+        if (!animating && !fireworksAlive) {
+          animationFrameRef.current = null
+          return
         }
+        frameId = requestAnimationFrame(animate)
+      } catch (err) {
+        // 单帧异常（如 canvas 上下文瞬时失效）绝不应让整页崩掉：
+        // 记录并停止循环，等待下一次交互/状态变化再恢复。
+        console.error('[VaporizeTextCycle] 动画帧出错，已暂停循环：', err)
+        animationFrameRef.current = null
       }
-
-      updateFireworks()
-      renderFireworks(ctx)
-
-      frameId = requestAnimationFrame(animate)
     }
 
     frameId = requestAnimationFrame(animate)
+    animationFrameRef.current = frameId
 
     return () => {
       if (frameId) {
@@ -901,10 +932,11 @@ const createParticles = (
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
   const data = imageData.data
 
-  const baseDPR = 3
+  // 收敛采样步长：原逻辑在高 DPR 下仍逐像素采样，单张大标题会生成数万粒子，
+  // 每帧遍历会严重拖慢并可能引发崩页。这里按 DPR 放大步长（最少 2px），
+  // 粒子数下降一个数量级且视觉几乎无差别。
   const currentDPR = canvas.width / parseInt(canvas.style.width)
-  const baseSampleRate = Math.max(1, Math.round(currentDPR / baseDPR))
-  const sampleRate = Math.max(1, Math.round(baseSampleRate))
+  const sampleRate = Math.max(2, Math.round(currentDPR))
 
   for (let y = 0; y < canvas.height; y += sampleRate) {
     for (let x = 0; x < canvas.width; x += sampleRate) {
@@ -1094,6 +1126,11 @@ function transformValue(input: number, inputRange: number[], outputRange: number
 
   return result
 }
+
+const prefersReducedMotion = (): boolean =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 function useIsInView(ref: React.RefObject<HTMLElement>) {
   const [isInView, setIsInView] = useState(false)

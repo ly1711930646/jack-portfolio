@@ -1,8 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { ContentProvider } from './context/ContentContext'
 import PortfolioPage from './pages/PortfolioPage'
-import AdminPage from './pages/AdminPage'
 import LoginPage, { isAuthenticated } from './pages/LoginPage'
+
+// 后台（AdminPage）及其依赖的 cos-js-sdk-v5 体积较大，与首屏主包无关，
+// 改为懒加载：仅在访问 /admin 时才拉取，显著加快作品集首屏加载。
+const AdminPage = lazy(() => import('./pages/AdminPage'))
 
 const AdminRoute = () => {
   return isAuthenticated() ? <AdminPage /> : <LoginPage />
@@ -17,10 +21,18 @@ function App() {
   return (
     <ContentProvider>
       <BrowserRouter basename={routerBasename}>
-        <Routes>
-          <Route path="/" element={<PortfolioPage />} />
-          <Route path="/admin" element={<AdminRoute />} />
-        </Routes>
+        <Suspense
+          fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#0C0C0C] text-white/60 text-sm font-light tracking-wider">
+              加载中…
+            </div>
+          }
+        >
+          <Routes>
+            <Route path="/" element={<PortfolioPage />} />
+            <Route path="/admin" element={<AdminRoute />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </ContentProvider>
   )
