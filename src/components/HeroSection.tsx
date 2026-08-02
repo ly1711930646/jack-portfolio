@@ -129,44 +129,65 @@ const BannerVideo = ({ src, fallback }: { src: string; fallback?: string }) => {
 
     const isM3U8 = src.endsWith('.m3u8') || src.includes('.m3u8')
     let destroyed = false
+    let cleanup: (() => void) | undefined
 
-    if (isM3U8 && !video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Lazy load hls.js only when needed (M3U8 on non-Safari browsers)
-      import('hls.js').then((HlsModule) => {
-        if (destroyed) return
-        const Hls = HlsModule.default
-        if (Hls.isSupported()) {
-          const hls = new Hls()
-          hls.loadSource(src)
-          hls.attachMedia(video)
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(() => {})
-          })
-          hls.on(Hls.Events.ERROR, (_event, data) => {
-            if (data.fatal) {
-              console.error('HLS fatal error:', data)
-              setFailed(true)
-            }
-          })
-        }
-      }).catch(() => {
+    // 首屏先显示 poster（静态海报），等浏览器空闲再加载视频，
+    // 避免 8~9MB 的背景视频阻塞首屏渲染与交互。
+    const start = () => {
+      if (destroyed || videoRef.current !== video) return
+
+      if (isM3U8 && !video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Lazy load hls.js only when needed (M3U8 on non-Safari browsers)
+        import('hls.js').then((HlsModule) => {
+          if (destroyed) return
+          const Hls = HlsModule.default
+          if (Hls.isSupported()) {
+            const hls = new Hls()
+            hls.loadSource(src)
+            hls.attachMedia(video)
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+              video.play().catch(() => {})
+            })
+            hls.on(Hls.Events.ERROR, (_event, data) => {
+              if (data.fatal) {
+                console.error('HLS fatal error:', data)
+                setFailed(true)
+              }
+            })
+          }
+        }).catch(() => {
+          setFailed(true)
+        })
+        return
+      }
+
+      // Native HLS (Safari) or non-M3U8 video
+      video.src = src
+      video.play().catch(() => {})
+
+      const onError = () => {
+        console.error('Video failed to load:', src)
         setFailed(true)
-      })
-      return () => { destroyed = true }
+      }
+      video.addEventListener('error', onError)
+      cleanup = () => video.removeEventListener('error', onError)
     }
 
-    // Native HLS (Safari) or non-M3U8 video
-    video.src = src
-    video.play().catch(() => {})
-
-    const onError = () => {
-      console.error('Video failed to load:', src)
-      setFailed(true)
+    let idleId: number
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(start, { timeout: 2000 })
+    } else {
+      idleId = window.setTimeout(start, 400)
     }
-    video.addEventListener('error', onError)
+
     return () => {
-      video.removeEventListener('error', onError)
       destroyed = true
+      if (typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId)
+      } else {
+        window.clearTimeout(idleId)
+      }
+      cleanup?.()
     }
   }, [src])
 
@@ -182,6 +203,8 @@ const BannerVideo = ({ src, fallback }: { src: string; fallback?: string }) => {
       muted
       loop
       playsInline
+      preload="metadata"
+      poster={fallback || undefined}
       className="absolute inset-0 w-full h-full object-cover"
       style={{ backgroundColor: 'black' }}
     />
