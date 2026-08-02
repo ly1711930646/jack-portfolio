@@ -165,12 +165,38 @@ const BannerVideo = ({ src, fallback }: { src: string; fallback?: string }) => {
       video.src = src
       video.play().catch(() => {})
 
+      // GitHub Pages/Fastly 对 <video> 的 range 请求支持不稳定，
+      // 常出现请求发出但长时间 readyState=0 的情况（fetch 同一 URL 却正常）。
+      // 兜底：3 秒后若仍无数据，用 fetch 拉完整 blob 走 objectURL 播放。
+      let blobUrl: string | undefined
+      const fallbackTimer = window.setTimeout(async () => {
+        if (destroyed || video.readyState >= 2 || !video.src) return
+        try {
+          const res = await fetch(src, { cache: 'no-store' })
+          if (!res.ok) return
+          const blob = await res.blob()
+          blobUrl = URL.createObjectURL(blob)
+          if (destroyed) {
+            URL.revokeObjectURL(blobUrl)
+            return
+          }
+          video.src = blobUrl
+          video.play().catch(() => {})
+        } catch (e) {
+          console.error('Video blob fallback failed:', e)
+        }
+      }, 3000)
+
       const onError = () => {
         console.error('Video failed to load:', src)
         setFailed(true)
       }
       video.addEventListener('error', onError)
-      cleanup = () => video.removeEventListener('error', onError)
+      cleanup = () => {
+        video.removeEventListener('error', onError)
+        window.clearTimeout(fallbackTimer)
+        if (blobUrl) URL.revokeObjectURL(blobUrl)
+      }
     }
 
     let idleId: number
