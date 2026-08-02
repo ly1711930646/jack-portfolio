@@ -878,6 +878,10 @@ const renderCanvas = ({
 
   particlesRef.current = particles
   canvas.textBoundaries = textBoundaries
+
+  // createParticles 最后会清空画布；如果当前处于 static 且动画循环已停止，
+  // canvas 将保持空白。这里立即绘制一次当前 particles，保证文字始终可见。
+  renderParticles(ctx, particles, globalDpr)
 }
 
 const createParticles = (
