@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 
 const ADMIN_USER = 'admin'
@@ -11,6 +12,7 @@ export const login = () => localStorage.setItem(AUTH_KEY, 'true')
 export const logout = () => localStorage.removeItem(AUTH_KEY)
 
 const LoginPage = () => {
+  const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -24,7 +26,7 @@ const LoginPage = () => {
     if (username === ADMIN_USER && password === ADMIN_PASS) {
       setLoading(true)
       login()
-      window.location.href = '/admin'
+      navigate('/admin')
     } else {
       setError('账号或密码错误')
     }
@@ -81,7 +83,7 @@ const LoginPage = () => {
         </form>
 
         <div className="mt-6 text-center">
-          <a href="/" className="text-sm text-white/40 hover:text-white/70 transition-colors">← 返回首页</a>
+          <Link to="/" className="text-sm text-white/40 hover:text-white/70 transition-colors">← 返回首页</Link>
         </div>
       </div>
     </div>
