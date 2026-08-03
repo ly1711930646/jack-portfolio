@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { ProjectItem } from '../content/siteContent'
 import { SmartImage } from './SmartImage'
+import { isZoomableCategory } from '../utils/projectCategory'
 
 interface ProjectModalProps {
   project: ProjectItem
@@ -11,12 +12,6 @@ interface ProjectModalProps {
 const ZOOM_MIN = 0.3
 const ZOOM_MAX = 3
 const ZOOM_STEP = 0.25
-
-// 判断项目是否属于「国内电商」类目（用于显示缩放工具栏）
-const isDomesticEcommerce = (p: ProjectItem) => {
-  const tags = Array.isArray(p.tags) ? p.tags : []
-  return tags.some((t) => t.trim() === '国内电商') || (p.category || '').trim() === '国内电商'
-}
 
 const ZoomInIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -38,12 +33,12 @@ const ZoomOutIcon = () => (
 const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [zoom, setZoom] = useState(0.3) // 国内电商默认 30% 预览
+  const [zoom, setZoom] = useState(0.3) // 图片缩放类目（国内电商 / 跨境电商）默认 30% 预览
   const [imgHeights, setImgHeights] = useState<number[]>([]) // 每张图 onLoad 时的 clientHeight（未 scale）
   const [shakeTick, setShakeTick] = useState(0) // 窗口抖动计数
   const onCloseRef = useRef(onClose) // 父组件频繁重渲染会创建新的 onClose，用 ref 保持引用稳定
   const prevProjectRef = useRef<ProjectItem | null>(null)
-  const showZoomBar = isDomesticEcommerce(project)
+  const showZoomBar = isZoomableCategory(project)
 
   // 同步更新 onCloseRef，但不用它触发 useEffect 重执行
   useEffect(() => {
@@ -117,7 +112,7 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
         triggerShake()
         return
       }
-      // 仅「国内电商」类目下：快捷键 +/-/0 控制缩放
+      // 图片缩放类目（国内电商 / 跨境电商）：快捷键 +/-/0 控制缩放
       if (showZoomBar) {
         if (e.key === '+' || e.key === '=') {
           e.preventDefault()
@@ -141,7 +136,7 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project, showZoomBar])
 
-  // Ctrl/Cmd + 滚轮 → 缩放（仅「国内电商」类目）
+  // Ctrl/Cmd + 滚轮 → 缩放（图片缩放类目）
   useEffect(() => {
     if (!showZoomBar) return
     const el = scrollRef.current
@@ -321,7 +316,7 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
           )}
         </div>
 
-        {/* 仅「国内电商」类目：右侧中部竖排缩放工具栏 */}
+        {/* 图片缩放类目（国内电商 / 跨境电商）：右侧中部竖排缩放工具栏 */}
         {showZoomBar && images.length > 0 && (
           <div
             className="pointer-events-none absolute right-3 sm:right-4 md:right-5 top-1/2 -translate-y-1/2 z-20"

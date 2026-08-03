@@ -6,15 +6,10 @@ import ProjectModal from './ProjectModal'
 import { useContent } from '../context/ContentContext'
 import type { ProjectItem } from '../content/siteContent'
 import { SmartImage } from './SmartImage'
+import { isZoomableCategory } from '../utils/projectCategory'
 
 // 项目底部区域统一只渲染一张图:有 coverImg 显示主图,空时显示统一占位大图
 const FALLBACK_PLACEHOLDER = 'assets/remote/placeholder-deco-tr.svg'
-
-// 判断项目是否属于「国内电商」类目，用于按钮图标切换（放大镜 vs 跳转箭头）
-const isDomesticEcommerce = (p: ProjectItem) => {
-  const tags = Array.isArray(p.tags) ? p.tags : []
-  return tags.some((t) => t.trim() === '国内电商') || (p.category || '').trim() === '国内电商'
-}
 
 const ProjectCard = forwardRef<HTMLDivElement, {
   project: ProjectItem
@@ -128,7 +123,7 @@ const ProjectCard = forwardRef<HTMLDivElement, {
             </div>
             <LiveProjectButton
               onClick={() => onOpen(project)}
-              icon={isDomesticEcommerce(project) ? 'search' : 'arrow'}
+              icon={isZoomableCategory(project) ? 'search' : 'arrow'}
             />
           </div>
 

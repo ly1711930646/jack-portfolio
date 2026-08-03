@@ -7,7 +7,7 @@ interface LiveProjectButtonProps {
   /**
    * 按钮尾部的小图标
    * - 'arrow'  ↗  跳转箭头（默认）
-   * - 'search' 🔍 放大镜，仅「国内电商」类目下使用
+   * - 'search' 🔍 放大镜，用于「国内电商 / 跨境电商」等支持图片缩放的类目
    */
   icon?: ButtonIcon
 }
