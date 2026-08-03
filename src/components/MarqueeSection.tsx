@@ -1,6 +1,22 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useContent } from '../context/ContentContext'
 import { SmartImage } from './SmartImage'
+
+/**
+ * 把本仓库 uploads 路径映射到 jsDelivr CDN：
+ * GitHub Pages 国内访问慢，jsDelivr 有国内节点、支持缓存，
+ * 图片加载速度显著提升。
+ */
+const toCdnUrl = (src: string): string => {
+  if (!src) return src
+  // 已经是外部 URL（http/https 或 // 开头）的不转换
+  if (/^https?:\/\//i.test(src) || /^\/\//i.test(src)) return src
+  const match = src.match(/\/jack-portfolio\/assets\/uploads\/([^/]+\.[a-z0-9]+)$/i)
+  if (match) {
+    return `https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/${match[1]}`
+  }
+  return src
+}
 
 const MarqueeRow = ({
   images,
@@ -14,6 +30,9 @@ const MarqueeRow = ({
   const rowRef = useRef<HTMLDivElement>(null)
   const [duration, setDuration] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
+
+  // 将所有本地 uploads 路径映射到 jsDelivr CDN
+  const cdnImages = useMemo(() => images.map(toCdnUrl), [images])
 
   useEffect(() => {
     const el = rowRef.current
@@ -42,10 +61,10 @@ const MarqueeRow = ({
       ro.disconnect()
       io.disconnect()
     }
-  }, [images, speed])
+  }, [cdnImages, speed])
 
   // 三倍复制内容，实现无缝循环
-  const tripled = [...images, ...images, ...images]
+  const tripled = [...cdnImages, ...cdnImages, ...cdnImages]
 
   const directionClass = direction === 'left' ? 'marquee-left' : 'marquee-right'
   const runningClass = duration > 0 && isVisible ? 'marquee-running' : ''
