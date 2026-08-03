@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - 页面不存在</title>
+  <style>
+    body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0C0C0C; color: #D7E2EA; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .wrap { text-align: center; padding: 2rem; }
+    h1 { font-size: 6rem; margin: 0; line-height: 1; }
+    p { color: #888; margin: 1rem 0 2rem; }
+    a { color: #4A90FF; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>404</h1>
+    <p>页面不存在，正在返回首页…</p>
+    <a href="/jack-portfolio/">← 返回首页</a>
+  </div>
+  <script>
+    // GitHub Pages SPA 兜底：将用户导向根路径
+    // React Router 会根据 URL hash 或 history 状态处理路由
+    var base = '/jack-portfolio/';
+    // 尝试保留原始路径（用于前端路由）
+    var path = location.pathname;
+    if (path.indexOf(base) === 0) {
+      var remaining = path.slice(base.length);
+      if (remaining && remaining !== '/') {
+        // 将路径编码后传给前端，或直接跳转回根让 React Router 处理
+        location.replace(base + '#' + remaining);
+      } else {
+        location.replace(base);
+      }
+    } else {
+      location.replace(base);
+    }
+  </script>
+</body>
+</html>
