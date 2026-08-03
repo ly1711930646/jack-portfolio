@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useContent, mergeWithDefault } from '../context/ContentContext'
 import { logout } from './LoginPage'
 import { isGitHubReady, uploadImage, uploadVideo, fetchImageBlobUrl } from '../lib/githubClient'
@@ -1578,7 +1578,6 @@ const ProjectsEditor = ({ projects, onChange }: { projects: ProjectsContent; onC
 
 const AdminPage = () => {
   const { content, saveContent, saveStatus, saveError } = useContent()
-  const navigate = useNavigate()
   // 关键：draft 必须 deep-clone content，不能用 useState(content) 直接传引用，
   // 否则后续 content 异步更新（比如 GitHub API 拿到数据 setContent）会导致 draft 自动跟着变，
   // 但 useState 的初始值只在 mount 时取一次。如果初始 content 是 defaultContent（loading 期间），
@@ -1787,7 +1786,9 @@ const AdminPage = () => {
           <button
             onClick={() => {
               logout()
-              navigate('/admin')
+              // 刷新当前页：AdminRoute 重新检查 isAuthenticated() → 渲染登录页。
+              // 不用 navigate（同路径 SPA 导航不会触发组件重挂载，页面仍停在后台）。
+              window.location.reload()
             }}
             className="text-sm px-4 py-2 rounded-full border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors"
           >
