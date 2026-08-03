@@ -277,7 +277,10 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
                   className="block w-full overflow-hidden"
                   style={
                     showZoomBar && imgHeights[i]
-                      ? { height: `${imgHeights[i] * zoom}px` }
+                      ? {
+                          height: `${Math.ceil(imgHeights[i] * zoom)}px`,
+                          marginBottom: zoom < 1 ? '-1px' : undefined,
+                        }
                       : undefined
                   }
                 >
