@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 
 const ADMIN_USER = 'admin'
@@ -12,7 +12,6 @@ export const login = () => localStorage.setItem(AUTH_KEY, 'true')
 export const logout = () => localStorage.removeItem(AUTH_KEY)
 
 const LoginPage = () => {
-  const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -26,7 +25,10 @@ const LoginPage = () => {
     if (username === ADMIN_USER && password === ADMIN_PASS) {
       setLoading(true)
       login()
-      navigate('/admin')
+      // 刷新当前页：AdminRoute 重新检查 isAuthenticated() → 渲染懒加载的 AdminPage。
+      // 不用 navigate（SPA 导航不会触发完整重载，导致懒加载 AdminPage 卡住），
+      // 也不用 window.location.href='/admin'（会丢失 base 路径跳到 GitHub 404）。
+      window.location.reload()
     } else {
       setError('账号或密码错误')
     }
