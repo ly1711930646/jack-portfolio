@@ -533,9 +533,12 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
   const [dragOverSubtitleField, setDragOverSubtitleField] = useState<string | null>(null)
   const [dragOverButtonField, setDragOverButtonField] = useState<string | null>(null)
 
-  const BannerPreview = ({ hero }: { hero: HeroContent; onChange?: (v: HeroContent) => void }) => {
+  const BannerPreview = ({ hero, onChange }: { hero: HeroContent; onChange: (v: HeroContent) => void }) => {
     const containerRef = useRef<HTMLDivElement>(null)
     const [scale, setScale] = useState(1)
+    const [dragging, setDragging] = useState(false)
+    const dragStartY = useRef(0)
+    const dragStartOffset = useRef(0)
 
     useEffect(() => {
       const el = containerRef.current
@@ -547,74 +550,118 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
       return () => ro.disconnect()
     }, [])
 
-    const displayName =
-      (hero.title.match(/[\u4e00-\u9fa5]+/) || [])[0] ||
-      hero.title ||
-      hero.bannerText ||
-      ''
+    const bannerFontSize = parseInt(hero.bannerTextSize) || 18
+    const bannerLineHeight = parseFloat(hero.bannerTextLineHeight) || 1.2
+    const bannerFontWeight = parseInt(hero.bannerTextWeight) || 700
+    const subtitleFontSize = parseInt(hero.bannerSubtitleSize) || 18
+    const subtitleColor = hero.bannerSubtitleColor || '#FFFFFF'
+    const subtitleLineHeight = parseFloat(hero.bannerSubtitleLineHeight) || 1.6
+    const subtitleFontWeight = parseInt(hero.bannerSubtitleWeight) || 300
+    const buttonColor = hero.bannerButtonColor || '#C8A575'
+    const buttonTextColor = hero.bannerButtonTextColor || '#FFFFFF'
+    const buttonFontSize = parseInt(hero.bannerButtonFontSize) || 14
+    const buttonFontWeight = parseInt(hero.bannerButtonFontWeight) || 500
+
     const referenceHeight = 720
 
     return (
       <div
         ref={containerRef}
-        className="w-full rounded-xl overflow-hidden border border-white/10 bg-[#F2F2F2] relative"
+        className="w-full rounded-xl overflow-hidden border border-white/10 bg-[#0C0C0C] relative"
         style={{ height: referenceHeight * scale }}
       >
         <div
-          className="absolute top-0 left-0 origin-top-left text-[#0C0C0C]"
+          className="absolute top-0 left-0 origin-top-left"
           style={{ width: 1280, height: referenceHeight, transform: `scale(${scale})` }}
         >
-          {/* Top center subtitle */}
-          {hero.bannerSubtitle && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 text-[10px] tracking-[0.25em] uppercase text-[#0C0C0C]/55">
-              {hero.bannerSubtitle}
-            </div>
+          {/* Background */}
+          {hero.bannerVideo ? (
+            <video
+              src={hero.bannerVideo}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : hero.bannerImage ? (
+            <img
+              src={hero.bannerImage}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-[#162536] via-[#0C0C0C] to-[#0a0a0a]" />
           )}
+          <div className="absolute inset-0 bg-black/40" />
 
-          {/* Center portrait + name */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            {hero.portraitImage && (
-              <img
-                src={hero.portraitImage}
-                alt=""
-                className="absolute left-1/2 -translate-x-1/2 bottom-0 h-[72%] w-auto object-contain opacity-90"
-              />
-            )}
-            {displayName && (
-              <h1
-                className="relative z-10 text-center font-black tracking-tighter leading-[0.85]"
-                style={{ fontSize: 'clamp(4rem, 15vw, 12rem)' }}
-              >
-                {displayName}
-              </h1>
-            )}
-          </div>
-
-          {/* Bottom left CTA */}
-          <div className="absolute bottom-10 left-12 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <div className="flex -space-x-1.5">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="w-5 h-5 rounded-full border border-[#F2F2F2] bg-neutral-400" />
-                ))}
+          {/* Content — draggable in preview */}
+          <div
+            className="absolute inset-x-0 top-[6%] flex items-start justify-center px-20"
+            style={{ transform: `translateY(${parseInt(hero.bannerContentOffsetY || '0')}px)` }}
+            onPointerDown={(e) => {
+              e.preventDefault()
+              setDragging(true)
+              dragStartY.current = e.clientY
+              dragStartOffset.current = parseInt(hero.bannerContentOffsetY || '0')
+              const el = e.currentTarget
+              el.setPointerCapture(e.pointerId)
+            }}
+            onPointerMove={(e) => {
+              if (!dragging) return
+              const deltaPx = (e.clientY - dragStartY.current) / scale
+              const nextOffset = Math.round(dragStartOffset.current + deltaPx)
+              onChange({ ...hero, bannerContentOffsetY: String(nextOffset) })
+            }}
+            onPointerUp={(e) => {
+              setDragging(false)
+              e.currentTarget.releasePointerCapture(e.pointerId)
+            }}
+          >
+            <div className={`text-center relative ${dragging ? 'cursor-grabbing' : 'cursor-grab'} group`} style={{ width: 'fit-content', maxWidth: '100%' }}>
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-white/40 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                拖动调整位置
               </div>
-              <span className="text-[9px] leading-tight text-[#0C0C0C]/55 max-w-[140px]">
-                专注 UI/UX 与视觉设计
-              </span>
+              {hero.bannerText && (
+                <h1
+                  className="whitespace-nowrap"
+                  style={{
+                    fontSize: `${Math.max(32, bannerFontSize)}px`,
+                    color: hero.bannerTextColor,
+                    lineHeight: bannerLineHeight,
+                    fontWeight: bannerFontWeight,
+                  }}
+                >
+                  {hero.bannerText}
+                </h1>
+              )}
+              {hero.bannerSubtitle && (
+                <p
+                  className="mt-5"
+                  style={{
+                    fontSize: `${subtitleFontSize}px`,
+                    color: subtitleColor,
+                    lineHeight: subtitleLineHeight,
+                    fontWeight: subtitleFontWeight,
+                  }}
+                >
+                  {hero.bannerSubtitle}
+                </p>
+              )}
+              {hero.bannerButtonText && (
+                <button
+                  className="mt-5 px-6 py-2 rounded-full"
+                  style={{
+                    backgroundColor: buttonColor,
+                    color: buttonTextColor,
+                    fontSize: `${buttonFontSize}px`,
+                    fontWeight: buttonFontWeight,
+                  }}
+                >
+                  {hero.bannerButtonText}
+                </button>
+              )}
             </div>
-            {hero.bannerButtonText && (
-              <button className="self-start bg-[#0C0C0C] text-white text-[10px] font-medium px-4 py-2 rounded-full">
-                {hero.bannerButtonText} ↗
-              </button>
-            )}
-          </div>
-
-          {/* Bottom right badge */}
-          <div className="absolute bottom-10 right-12 flex flex-col items-end gap-1">
-            <div className="w-12 h-12 rounded-full border border-[#0C0C0C]/20 flex items-center justify-center">
-              <span className="text-[8px] text-[#0C0C0C]/60">UI</span>
-            </div>
-            <span className="text-[9px] text-[#0C0C0C]/55">UI/UX 设计师</span>
           </div>
         </div>
       </div>
@@ -624,27 +671,22 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
   return (
     <div className="space-y-6">
       <Card title="Banner 预览">
-        <p className="text-xs text-white/40 mb-3">实时预览（按 1280×720 视口比例缩放）。当前为 Mathew header 风格：浅灰背景、超大姓名、人像在文字后方、底部 CTA 与徽章。</p>
+        <p className="text-xs text-white/40 mb-3">实时预览（按 1280×720 视口比例缩放，文字过大会自动截断）。在预览图中按住文字/按钮可上下拖动调整位置。</p>
         <BannerPreview hero={hero} onChange={onChange} />
-      </Card>
-
-      <Card title="人像图片">
-        <p className="text-xs text-white/40 mb-3">Mathew header 风格首页中央的大人像。建议上传带透明背景的 PNG 半身照，效果最佳；JPG 也可正常显示。</p>
-        <Input
-          placeholder="https://example.com/portrait.png（留空则不显示）"
-          value={hero.portraitImage}
-          onChange={(e) => onChange({ ...hero, portraitImage: e.target.value })}
-        />
-        <GitHubAssetUploader value={hero.portraitImage} onPicked={(u) => onChange({ ...hero, portraitImage: u })} />
-        {hero.portraitImage && (
-          <div className="mt-4 rounded-xl overflow-hidden border border-white/10 bg-[#0C0C0C] flex justify-center">
-            <img src={hero.portraitImage} alt="人像预览" className="w-auto h-auto max-h-[400px] object-contain" />
-          </div>
-        )}
+        <div className="mt-4 flex items-center gap-3">
+          <label className="text-xs text-white/50 whitespace-nowrap">垂直偏移（px）</label>
+          <input
+            type="number"
+            value={hero.bannerContentOffsetY || '0'}
+            onChange={(e) => onChange({ ...hero, bannerContentOffsetY: e.target.value })}
+            className="w-24 bg-transparent border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-[#4A90FF]/50 focus:outline-none transition-colors"
+          />
+          <span className="text-xs text-white/30">正数向下，负数向上</span>
+        </div>
       </Card>
 
       <Card title="背景图片">
-        <p className="text-xs text-white/40 mb-3">支持 JPG / PNG / GIF / WebP 等格式，填 URL 或点下方按钮直传（已配腾讯云 COS 则直传 COS，否则直传 GitHub，均为国内可直连）。当前新首页主要使用「人像图片」，背景图片已被替代。</p>
+        <p className="text-xs text-white/40 mb-3">支持 JPG / PNG / GIF / WebP 等格式，填 URL 或点下方按钮直传（已配腾讯云 COS 则直传 COS，否则直传 GitHub，均为国内可直连）</p>
         <Input
           placeholder="https://example.com/bg.jpg（留空则不显示）"
           value={hero.bannerImage}

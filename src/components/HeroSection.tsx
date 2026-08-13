@@ -1,195 +1,373 @@
 import { useContent } from '../context/ContentContext'
 import { SmartImage } from './SmartImage'
-import { useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { ArrowUpRight } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import VaporizeTextCycle, { Tag } from './VaporizeTextCycle'
 
-/**
- * HeroSection — Mathew header 风格
- * 浅灰背景 + 超大居中姓名 + 人像在文字后方 + 底部 CTA / 头像组 / 旋转徽章
- */
+const TRAIL_EMOJIS = ['🔥', '✨', '⚡', '💫', '🌟', '💡', '🎨', '🚀', '🌈', '💥', '🪐', '⭐']
 
-const RotatingBadge = ({ text }: { text: string }) => {
-  const svgRef = useRef<SVGSVGElement>(null)
+type Sprite = {
+  el: HTMLDivElement
+  x: number
+  y: number
+  vx: number
+  vy: number
+  rot: number
+  vr: number
+  life: number
+}
+
+const TrailEmojis = () => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const sprites = useRef<Sprite[]>([])
+  const lastSpawn = useRef({ x: 0, y: 0, t: 0 })
+  const raf = useRef<number>()
 
   useEffect(() => {
-    const svg = svgRef.current
-    if (!svg) return
-    let raf = 0
-    let angle = 0
-    const step = () => {
-      angle = (angle + 0.35) % 360
-      svg.style.transform = `rotate(${angle}deg)`
-      raf = requestAnimationFrame(step)
+    const container = containerRef.current
+    if (!container) return
+
+    // 性能优化：降低生成频率、缩短存活时间，减少 DOM 节点堆积
+    const SPAWN_DIST = 36
+    const SPAWN_INTERVAL = 60
+
+    const onMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+      const inside = x >= 0 && x <= rect.width && y >= 0 && y <= rect.height
+      if (!inside) return
+
+      const t = performance.now()
+      const dist = Math.hypot(x - lastSpawn.current.x, y - lastSpawn.current.y)
+      if (dist > SPAWN_DIST && t - lastSpawn.current.t > SPAWN_INTERVAL) {
+        lastSpawn.current = { x, y, t }
+        const el = document.createElement('div')
+        el.textContent = TRAIL_EMOJIS[(Math.random() * TRAIL_EMOJIS.length) | 0]
+        el.className = 'pointer-events-none absolute left-0 top-0 text-lg sm:text-xl select-none'
+        el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`
+        el.style.willChange = 'transform, opacity'
+        container.appendChild(el)
+        sprites.current.push({
+          el,
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 0.8,
+          vy: -0.3 - Math.random() * 0.5,
+          rot: (Math.random() - 0.5) * 45,
+          vr: (Math.random() - 0.5) * 5,
+          life: 1,
+        })
+      }
     }
-    raf = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(raf)
+
+    const tick = () => {
+      const arr = sprites.current
+      for (let i = arr.length - 1; i >= 0; i--) {
+        const s = arr[i]
+        s.x += s.vx
+        s.y += s.vy
+        s.rot += s.vr
+        // 加快消失速度：约 0.7s 消完，减少 DOM 长时间堆积
+        s.life -= 0.038
+        if (s.life <= 0) {
+          s.el.remove()
+          arr.splice(i, 1)
+          continue
+        }
+        const scale = 0.4 + s.life * 0.8
+        s.el.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -50%) scale(${scale}) rotate(${s.rot}deg)`
+        s.el.style.opacity = String(Math.max(0, s.life))
+      }
+      raf.current = requestAnimationFrame(tick)
+    }
+
+    window.addEventListener('mousemove', onMove)
+    raf.current = requestAnimationFrame(tick)
+
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      if (raf.current) cancelAnimationFrame(raf.current)
+      sprites.current.forEach((s) => s.el.remove())
+      sprites.current = []
+    }
   }, [])
 
   return (
-    <svg
-      ref={svgRef}
-      viewBox="0 0 100 100"
-      className="w-16 h-16 md:w-20 md:h-20"
-      style={{ willChange: 'transform' }}
-    >
-      <defs>
-        <path
-          id="circlePath"
-          d="M 50,50 m -37,0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0"
-        />
-      </defs>
-      <text className="fill-[#0C0C0C]/70 text-[11px] uppercase tracking-[0.18em]">
-        <textPath href="#circlePath" startOffset="0%">
-          {text}
-        </textPath>
-      </text>
-    </svg>
+    <div
+      ref={containerRef}
+      className="absolute inset-0 pointer-events-none z-30 overflow-hidden"
+      aria-hidden="true"
+    />
   )
 }
 
-const AvatarStack = () => (
-  <div className="flex -space-x-2.5">
-    {[0, 1, 2].map((i) => (
-      <div
-        key={i}
-        className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-[#F2F2F2] bg-neutral-300"
-        style={{
-          backgroundImage: `linear-gradient(135deg, ${
-            i === 0 ? '#d4d4d4 0%, #a3a3a3 100%' : i === 1 ? '#a3a3a3 0%, #737373 100%' : '#737373 0%, #525252 100%'
-          })`,
-        }}
-      />
-    ))}
-  </div>
-)
+const DiffuseBackground = () => {
+  return (
+    <div className="absolute inset-0 z-0 overflow-hidden bg-[#0C0C0C]" aria-hidden="true" />
+  )
+}
+
+const BannerMedia = ({ hero }: { hero: import('../content/siteContent').HeroContent }) => {
+  if (!hero.bannerVideo && !hero.bannerImage) return null
+
+  return hero.bannerVideo ? <BannerVideo src={hero.bannerVideo} fallback={hero.bannerImage} /> : (
+    <SmartImage
+      src={hero.bannerImage}
+      alt="Banner Background"
+      className="absolute inset-0 w-full h-full object-cover"
+    />
+  )
+}
+
+// 把本仓库 uploads 路径映射到 jsDelivr CDN：
+// GitHub Pages/Fastly 对 <video> 的 range 请求极不稳定（readyState 长期为 0），
+// jsDelivr 支持 206 range、国内访问更快，视频才能正常加载播放。
+const toCdnVideoUrl = (src: string): string => {
+  if (!src) return src
+  const match = src.match(/\/jack-portfolio\/assets\/uploads\/([^/]+\.mp4)$/i)
+  if (match) {
+    return `https://cdn.jsdelivr.net/gh/ly1711930646/jack-portfolio@main/public/assets/uploads/${match[1]}`
+  }
+  return src
+}
+
+const BannerVideo = ({ src, fallback }: { src: string; fallback?: string }) => {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [failed, setFailed] = useState(false)
+  const cdnSrc = useMemo(() => toCdnVideoUrl(src), [src])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !cdnSrc) return
+
+    const isM3U8 = cdnSrc.endsWith('.m3u8') || cdnSrc.includes('.m3u8')
+    let destroyed = false
+    let cleanup: (() => void) | undefined
+
+    // 首屏先显示 poster（静态海报），等浏览器空闲再加载视频，
+    // 避免 8~9MB 的背景视频阻塞首屏渲染与交互。
+    const start = () => {
+      if (destroyed || videoRef.current !== video) return
+
+      if (isM3U8 && !video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Lazy load hls.js only when needed (M3U8 on non-Safari browsers)
+        import('hls.js').then((HlsModule) => {
+          if (destroyed) return
+          const Hls = HlsModule.default
+          if (Hls.isSupported()) {
+            const hls = new Hls()
+            hls.loadSource(src)
+            hls.attachMedia(video)
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+              video.play().catch(() => {})
+            })
+            hls.on(Hls.Events.ERROR, (_event, data) => {
+              if (data.fatal) {
+                console.error('HLS fatal error:', data)
+                setFailed(true)
+              }
+            })
+          }
+        }).catch(() => {
+          setFailed(true)
+        })
+        return
+      }
+
+      // Native HLS (Safari) or non-M3U8 video
+      video.src = cdnSrc
+      video.play().catch(() => {})
+
+      // jsDelivr 已能解决 range 问题；兜底保留：3 秒后若仍无数据，
+      // 用 fetch 拉完整 blob 走 objectURL 播放。
+      let blobUrl: string | undefined
+      const fallbackTimer = window.setTimeout(async () => {
+        if (destroyed || video.readyState >= 2 || !video.src) return
+        try {
+          const res = await fetch(cdnSrc, { cache: 'no-store' })
+          if (!res.ok) return
+          const blob = await res.blob()
+          blobUrl = URL.createObjectURL(blob)
+          if (destroyed) {
+            URL.revokeObjectURL(blobUrl)
+            return
+          }
+          video.src = blobUrl
+          video.play().catch(() => {})
+        } catch (e) {
+          console.error('Video blob fallback failed:', e)
+        }
+      }, 3000)
+
+      const onError = () => {
+        console.error('Video failed to load:', cdnSrc)
+        setFailed(true)
+      }
+      video.addEventListener('error', onError)
+      cleanup = () => {
+        video.removeEventListener('error', onError)
+        window.clearTimeout(fallbackTimer)
+        if (blobUrl) URL.revokeObjectURL(blobUrl)
+      }
+    }
+
+    let idleId: number
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(start, { timeout: 2000 })
+    } else {
+      idleId = window.setTimeout(start, 400)
+    }
+
+    return () => {
+      destroyed = true
+      if (typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId)
+      } else {
+        window.clearTimeout(idleId)
+      }
+      cleanup?.()
+    }
+  }, [cdnSrc])
+
+  // If video fails to load and we have a fallback image, show it instead
+  if (failed && fallback) {
+    return <SmartImage src={fallback} alt="Banner Background" className="absolute inset-0 w-full h-full object-cover" />
+  }
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      poster={fallback || undefined}
+      className="absolute inset-0 w-full h-full object-cover"
+      style={{ backgroundColor: 'black' }}
+    />
+  )
+}
 
 const HeroSection = () => {
   const { content } = useContent()
   const { hero } = content
 
-  // 大标题优先取 title 中的中文姓名；没有中文则使用完整 title；都没有则用 bannerText
-  const displayName =
-    (hero.title.match(/[\u4e00-\u9fa5]+/) || [])[0] ||
-    hero.title ||
-    hero.bannerText ||
-    ''
+  // 字号直接使用后台设置的值，与后台预览保持一致
+  const bannerFontSize = parseInt(hero.bannerTextSize) || 18
+  const titleFontPx = Math.max(32, bannerFontSize)
 
-  const topLine = hero.bannerSubtitle || ''
-  const ctaText = hero.bannerButtonText || ''
-  const ctaLink = hero.bannerButtonLink || '#contact'
-  const portrait = hero.portraitImage || hero.bannerImage || ''
+  const hasBanner = !!(hero.bannerVideo || hero.bannerImage)
+  const bannerFontWeight = parseInt(hero.bannerTextWeight) || 700
+
+  const subtitleFontSize = parseInt(hero.bannerSubtitleSize) || 18
+  const subtitleColor = hero.bannerSubtitleColor || '#FFFFFF'
+  const subtitleLineHeight = parseFloat(hero.bannerSubtitleLineHeight) || 1.6
+  const subtitleFontWeight = parseInt(hero.bannerSubtitleWeight) || 300
+  const buttonColor = hero.bannerButtonColor || '#C8A575'
+  const buttonTextColor = hero.bannerButtonTextColor || '#FFFFFF'
+  const buttonFontSize = parseInt(hero.bannerButtonFontSize) || 14
+  const buttonFontWeight = parseInt(hero.bannerButtonFontWeight) || 500
+  const contentOffsetY = parseInt(hero.bannerContentOffsetY || '0')
 
   return (
     <section
       id="hero"
-      className="relative h-screen w-full bg-[#F2F2F2] text-[#0C0C0C] overflow-hidden"
+      className={`relative h-screen flex flex-col overflow-x-clip ${hasBanner ? '' : 'bg-[#0C0C0C]'}`}
     >
-      {/* 顶部居中细字（类似 Based in London） */}
-      {topLine && (
-        <motion.div
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
-          className="absolute top-24 md:top-28 left-1/2 -translate-x-1/2 z-20"
-        >
-          <span className="text-[10px] md:text-xs tracking-[0.25em] uppercase text-[#0C0C0C]/55">
-            {topLine}
-          </span>
-        </motion.div>
+      {/* Diffuse aurora background (fallback when no banner media) */}
+      <DiffuseBackground />
+
+      {/* Banner Background */}
+      {hasBanner && (
+        <div className="absolute inset-0 z-0">
+          <BannerMedia hero={hero} />
+          <div className="absolute inset-0 bg-black/15" />
+        </div>
       )}
 
-      {/* 中央大标题 + 人像 */}
-      <div className="absolute inset-0 flex items-center justify-center z-10">
-        <div className="relative w-full max-w-[90rem] mx-auto px-4 h-full flex items-center justify-center">
-          {/* 水平光条（Mathew 风格的橙色眼部光晕） */}
+      {/* Mouse-trail emojis */}
+      <TrailEmojis />
+
+      {/* Banner Content */}
+      {hasBanner && hero.bannerText && (
+        <div
+          className="absolute inset-0 z-10 flex flex-col items-center justify-start pt-[3%] px-6 sm:px-12 md:px-16 lg:px-20"
+        >
           <div
-            className="absolute left-0 right-0 h-3 md:h-5 pointer-events-none z-0"
-            style={{
-              top: 'calc(50% - 0.75rem)',
-              background:
-                'linear-gradient(90deg, transparent 0%, rgba(249,115,22,0.85) 20%, rgba(239,68,68,0.9) 50%, rgba(249,115,22,0.85) 80%, transparent 100%)',
-              filter: 'blur(8px)',
-              opacity: 0.75,
-            }}
-          />
+            className="text-center flex flex-col items-center gap-6"
+            style={{ width: 'fit-content', maxWidth: '100%', transform: `translateY(${contentOffsetY}px)` }}
+          >
+              {/* Title */}
+              {hero.bannerText && (
+                <div className="w-full flex items-center justify-center">
+                  <VaporizeTextCycle
+                    texts={[hero.bannerText]}
+                    font={{
+                      fontFamily: 'Inter, "PingFang SC", "Microsoft YaHei", sans-serif',
+                      fontSize: `${titleFontPx}px`,
+                      fontWeight: bannerFontWeight,
+                    }}
+                    color={hero.bannerTextColor}
+                    spread={5}
+                    density={5}
+                    animation={{
+                      vaporizeDuration: 1.2,
+                      fadeInDuration: 1.2,
+                      waitDuration: 0.4,
+                    }}
+                    direction="left-to-right"
+                    alignment={(hero.bannerTextAlign as 'left' | 'center' | 'right') || 'center'}
+                    tag={Tag.H1}
+                    interactive
+                  />
+                </div>
+              )}
 
-          {/* 人像：放在文字后方 */}
-          {portrait && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.3, ease: 'easeOut' }}
-              className="absolute left-1/2 -translate-x-1/2 bottom-0 z-0 h-[62vh] md:h-[72vh] w-auto max-w-[90%]"
-            >
-              <SmartImage
-                src={portrait}
-                alt={displayName}
-                className="h-full w-auto object-contain"
-              />
-            </motion.div>
-          )}
+              {/* Subtitle */}
+              {hero.bannerSubtitle && (
+                <p
+                  style={{
+                    fontSize: `${subtitleFontSize}px`,
+                    color: subtitleColor,
+                    lineHeight: subtitleLineHeight,
+                    fontWeight: subtitleFontWeight,
+                  }}
+                >
+                  {hero.bannerSubtitle}
+                </p>
+              )}
 
-          {/* 超大姓名 */}
-          {displayName && (
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-              className="relative z-10 text-center font-black tracking-tighter leading-[0.85] select-none"
-              style={{
-                fontSize: 'clamp(3.5rem, 17vw, 13rem)',
-                color: '#0C0C0C',
-              }}
-            >
-              {displayName}
-            </motion.h1>
-          )}
+              {/* Button */}
+              {hero.bannerButtonText && (
+                <a
+                  href={hero.bannerButtonLink || undefined}
+                  onClick={(e) => {
+                    // No link set → do nothing (no scroll, no jump)
+                    if (!hero.bannerButtonLink) e.preventDefault()
+                  }}
+                  style={{
+                    backgroundColor: buttonColor,
+                    color: buttonTextColor,
+                    fontSize: `${buttonFontSize}px`,
+                    fontWeight: buttonFontWeight,
+                  }}
+                  className="inline-block px-7 py-3 rounded-full text-white font-medium text-sm transition-transform hover:scale-105 cursor-pointer"
+                >
+                  {hero.bannerButtonText}
+                </a>
+              )}
+            </div>
+        </div>
+      )}
+
+      {/* Scroll Down Indicator */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3">
+        <span className="text-white/60 text-sm font-light tracking-wider">滚动查看更多</span>
+        <div className="w-9 h-14 rounded-full border-2 border-white/50 flex justify-center pt-2">
+          <div className="w-1.5 h-2.5 bg-white/80 rounded-full animate-bounce-down" />
         </div>
       </div>
-
-      {/* 底部左侧：头像组 + 简介 + CTA */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.5, ease: 'easeOut' }}
-        className="absolute bottom-8 md:bottom-12 left-6 md:left-12 z-20 flex flex-col gap-4 max-w-[280px]"
-      >
-        <div className="flex items-center gap-3">
-          <AvatarStack />
-          <p className="text-[10px] md:text-xs leading-relaxed text-[#0C0C0C]/55">
-            专注 UI/UX 与视觉设计，<br className="hidden md:block" />
-            让每一次第一眼都留下深刻印象。
-          </p>
-        </div>
-
-        {ctaText && (
-          <a
-            href={ctaLink}
-            onClick={(e) => {
-              if (!ctaLink || ctaLink === '#') e.preventDefault()
-            }}
-            className="group inline-flex items-center gap-2 self-start bg-[#0C0C0C] text-white text-xs md:text-sm font-medium px-5 py-3 rounded-full transition-transform hover:scale-105"
-          >
-            {ctaText}
-            <ArrowUpRight
-              size={14}
-              className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-            />
-          </a>
-        )}
-      </motion.div>
-
-      {/* 底部右侧：旋转徽章 + 角色 */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.6, ease: 'easeOut' }}
-        className="absolute bottom-8 md:bottom-12 right-6 md:right-12 z-20 flex flex-col items-end gap-2"
-      >
-        <RotatingBadge text="UI DESIGN • 视觉设计 • 品牌设计 • " />
-        <span className="text-xs text-[#0C0C0C]/55 tracking-wide">UI/UX 设计师</span>
-      </motion.div>
     </section>
   )
 }
