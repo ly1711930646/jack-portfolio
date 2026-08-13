@@ -685,8 +685,23 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
         </div>
       </Card>
 
+      <Card title="人像图片">
+        <p className="text-xs text-white/40 mb-3">Mathew header 风格首页中央的大人像。建议上传带透明背景的 PNG 半身照，效果最佳；JPG 也可正常显示。</p>
+        <Input
+          placeholder="https://example.com/portrait.png（留空则不显示）"
+          value={hero.portraitImage}
+          onChange={(e) => onChange({ ...hero, portraitImage: e.target.value })}
+        />
+        <GitHubAssetUploader value={hero.portraitImage} onPicked={(u) => onChange({ ...hero, portraitImage: u })} />
+        {hero.portraitImage && (
+          <div className="mt-4 rounded-xl overflow-hidden border border-white/10 bg-[#0C0C0C] flex justify-center">
+            <img src={hero.portraitImage} alt="人像预览" className="w-auto h-auto max-h-[400px] object-contain" />
+          </div>
+        )}
+      </Card>
+
       <Card title="背景图片">
-        <p className="text-xs text-white/40 mb-3">支持 JPG / PNG / GIF / WebP 等格式，填 URL 或点下方按钮直传（已配腾讯云 COS 则直传 COS，否则直传 GitHub，均为国内可直连）</p>
+        <p className="text-xs text-white/40 mb-3">支持 JPG / PNG / GIF / WebP 等格式，填 URL 或点下方按钮直传（已配腾讯云 COS 则直传 COS，否则直传 GitHub，均为国内可直连）。当前新首页主要使用「人像图片」，背景图片已被替代。</p>
         <Input
           placeholder="https://example.com/bg.jpg（留空则不显示）"
           value={hero.bannerImage}

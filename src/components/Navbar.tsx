@@ -12,6 +12,8 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [activeId, setActiveId] = useState('hero')
   const [lockedId, setLockedId] = useState<string | null>(null)
+  // 当前是否在浅色 Hero 区域：Mathew header 风格下导航栏要切深色主题
+  const isHero = activeId === 'hero'
 
   // ── Scroll Spy: detect which section is in view ──
   useEffect(() => {
@@ -90,12 +92,12 @@ const Navbar = () => {
   return (
     <>
       {/* ── Nav bar capsule ── */}
-      <nav className="nav-glass fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-4 px-5 md:px-8 py-3 rounded-full mx-auto max-w-6xl mt-4 transition-opacity duration-300">
+      <nav className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-4 px-5 md:px-8 py-3 rounded-full mx-auto max-w-6xl mt-4 transition-all duration-300 ${isHero ? 'bg-[#F2F2F2]/50 border border-black/10 backdrop-blur-xl' : 'nav-glass'}`}>
         {/* Logo */}
         <a
           href="#hero"
           className={`font-medium text-base tracking-wide whitespace-nowrap transition-colors duration-300 ${
-            activeId === 'hero' ? 'text-[#4A90FF]' : 'text-[#D7E2EA]'
+            isHero ? 'text-[#0C0C0C]' : 'text-[#D7E2EA]'
           }`}
           onClick={(e) => scrollToSection(e, '#hero')}
         >
@@ -110,8 +112,8 @@ const Navbar = () => {
             const baseClass =
               'text-sm font-light transition-colors duration-300 whitespace-nowrap'
             const colorClass = isActive
-              ? `text-[${ACTIVE_COLOR}] font-normal`
-              : 'text-[#D7E2EA]/70 hover:text-white'
+              ? (isHero ? 'text-[#0C0C0C] font-normal' : `text-[${ACTIVE_COLOR}] font-normal`)
+              : (isHero ? 'text-[#0C0C0C]/60 hover:text-[#0C0C0C]' : 'text-[#D7E2EA]/70 hover:text-white')
 
             return link.href.startsWith('#') ? (
               <a
@@ -125,13 +127,13 @@ const Navbar = () => {
                   <motion.span
                     layoutId="nav-indicator"
                     className="absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full"
-                    style={{ backgroundColor: ACTIVE_COLOR }}
+                    style={{ backgroundColor: isHero ? '#0C0C0C' : ACTIVE_COLOR }}
                     transition={{ type: 'spring', stiffness: 420, damping: 32 }}
                   />
                 )}
               </a>
             ) : (
-              <Link key={link.href} to={link.href} className={`${baseClass} text-[#D7E2EA]/70 hover:text-white`}>
+              <Link key={link.href} to={link.href} className={`${baseClass} ${isHero ? 'text-[#0C0C0C]/60 hover:text-[#0C0C0C]' : 'text-[#D7E2EA]/70 hover:text-white'}`}>
                 {link.label}
               </Link>
             )
@@ -142,14 +144,20 @@ const Navbar = () => {
         <button
           type="button"
           onClick={handleLiquidMetalProfile}
-          className="hidden md:inline-flex items-center gap-2 nav-glass-button text-sm font-bold px-6 py-2.5 rounded-full whitespace-nowrap cursor-pointer"
+          className={`hidden md:inline-flex items-center gap-2 text-sm font-bold px-6 py-2.5 rounded-full whitespace-nowrap cursor-pointer transition-colors ${
+            isHero
+              ? 'bg-[#0C0C0C] text-white hover:bg-[#1a1a1a]'
+              : 'nav-glass-button'
+          }`}
         >
           {hero.ctaText}
         </button>
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden text-[#D7E2EA]/70 hover:text-white transition-colors duration-300"
+          className={`md:hidden transition-colors duration-300 ${
+            isHero ? 'text-[#0C0C0C]/70 hover:text-[#0C0C0C]' : 'text-[#D7E2EA]/70 hover:text-white'
+          }`}
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle menu"
         >
