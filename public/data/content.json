@@ -355,6 +355,7 @@
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1787328031046-e4j7vo.png",
         "images": [
+          "/jack-portfolio/assets/uploads/1787333309506-c16y1b.jpg",
           "/jack-portfolio/assets/uploads/1787327802470-zmkz98.jpg",
           "/jack-portfolio/assets/uploads/1787327806310-aih30k.jpg",
           "/jack-portfolio/assets/uploads/1787327809830-592pnu.jpg",
@@ -486,6 +487,25 @@
           "/jack-portfolio/assets/uploads/1787332017920-g0fpqy.jpg"
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1787332085425-ug25s2.jpg"
+      },
+      {
+        "number": "2-2",
+        "name": " 智能手表  —  KOSPET Pulse",
+        "category": "A+ 设计",
+        "tags": [
+          "跨境电商"
+        ],
+        "images": [
+          "/jack-portfolio/assets/uploads/1787333015034-4u72ej.jpg",
+          "/jack-portfolio/assets/uploads/1787333017730-cje1sc.jpg",
+          "/jack-portfolio/assets/uploads/1787333021239-17rdkb.jpg",
+          "/jack-portfolio/assets/uploads/1787333023833-4uf4vv.jpg",
+          "/jack-portfolio/assets/uploads/1787333027011-2ncbid.jpg",
+          "/jack-portfolio/assets/uploads/1787333030132-c7xszr.jpg",
+          "/jack-portfolio/assets/uploads/1787333032841-7rrske.jpg",
+          "/jack-portfolio/assets/uploads/1787333035692-g83gtn.jpg"
+        ],
+        "coverImg": "/jack-portfolio/assets/uploads/1787333255627-bbq9yb.jpg"
       }
     ]
   },
