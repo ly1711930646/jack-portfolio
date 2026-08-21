@@ -458,19 +458,6 @@
         ]
       },
       {
-        "number": "3-1",
-        "name": "宠物  —  零食猫粮 ",
-        "category": "详情页",
-        "tags": [
-          "国内电商"
-        ],
-        "images": [
-          "/jack-portfolio/assets/uploads/1785740495024-pob7a7.jpg",
-          "/jack-portfolio/assets/uploads/1785740498323-lwha4j.jpg"
-        ],
-        "coverImg": "/jack-portfolio/assets/uploads/1785748588676-hej6g2.jpg"
-      },
-      {
         "number": "2-1",
         "name": " 智能手表  —  KOSPET Orb",
         "category": "A+ 设计",
@@ -507,34 +494,6 @@
           "/jack-portfolio/assets/uploads/1787333035692-g83gtn.jpg"
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1787333255627-bbq9yb.jpg"
-      },
-      {
-        "number": "7-0",
-        "name": "多媒体平台-运营广告",
-        "category": "运营设计",
-        "tags": [
-          "运营设计"
-        ],
-        "images": [
-          "/jack-portfolio/assets/uploads/1787335289111-f4zdyd.jpg",
-          "/jack-portfolio/assets/uploads/1787335292307-12263b.jpg",
-          "/jack-portfolio/assets/uploads/1787335295652-x8pv3w.jpg",
-          "/jack-portfolio/assets/uploads/1787335299383-9j9agh.jpg",
-          "/jack-portfolio/assets/uploads/1787335302500-ob3dfb.jpg",
-          "/jack-portfolio/assets/uploads/1787335306234-2z3u5w.jpg",
-          "/jack-portfolio/assets/uploads/1787335309821-3e84gx.jpg",
-          "/jack-portfolio/assets/uploads/1787335313147-1uvoq9.jpg",
-          "/jack-portfolio/assets/uploads/1787335318005-vcvjnv.jpg",
-          "/jack-portfolio/assets/uploads/1787335321821-q9lkwv.jpg",
-          "/jack-portfolio/assets/uploads/1787335373223-mmqrxo.jpg",
-          "/jack-portfolio/assets/uploads/1787335377666-dsb1z4.jpg",
-          "/jack-portfolio/assets/uploads/1787335421271-qxaz4q.jpg",
-          "/jack-portfolio/assets/uploads/1787335425716-tskkjb.jpg",
-          "/jack-portfolio/assets/uploads/1787335471530-6rgcwm.jpg",
-          "/jack-portfolio/assets/uploads/1787335475771-yqoilb.jpg",
-          "/jack-portfolio/assets/uploads/1787335518913-mv4qyg.jpg"
-        ],
-        "coverImg": "/jack-portfolio/assets/uploads/1787336501504-hi411e.jpg"
       }
     ]
   },
