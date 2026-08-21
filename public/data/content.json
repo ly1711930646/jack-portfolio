@@ -253,22 +253,6 @@
       },
       {
         "number": "2-0",
-        "name": "割草机  —  VSLAM ",
-        "category": "A+ 设计",
-        "tags": [
-          "跨境电商"
-        ],
-        "images": [
-          "/jack-portfolio/assets/uploads/1785573044192-3jh6hg.webp",
-          "/jack-portfolio/assets/uploads/1785573046679-tudl1z.webp",
-          "/jack-portfolio/assets/uploads/1785573050533-84s7ky.webp",
-          "/jack-portfolio/assets/uploads/1785573053595-fd2g9n.webp",
-          "/jack-portfolio/assets/uploads/1785573058732-w94p5h.webp"
-        ],
-        "coverImg": "/jack-portfolio/assets/uploads/1785400888455-1uq6od.webp"
-      },
-      {
-        "number": "2-1",
         "name": " 智能手表  —  KOSPET TANK T4 ",
         "category": "A+ 设计",
         "tags": [
@@ -427,22 +411,6 @@
         ]
       },
       {
-        "number": "2-3",
-        "name": "摄像头  —  无线红外摄像头 ",
-        "category": "A+ 设计",
-        "tags": [
-          "跨境电商"
-        ],
-        "images": [
-          "/jack-portfolio/assets/uploads/1785432557219-j3snbd.webp",
-          "/jack-portfolio/assets/uploads/1785432564878-05lpp1.webp",
-          "/jack-portfolio/assets/uploads/1785432571582-q702e6.webp",
-          "/jack-portfolio/assets/uploads/1785432579057-p4m5tg.webp",
-          "/jack-portfolio/assets/uploads/1785432584744-vdxdec.webp"
-        ],
-        "coverImg": "/jack-portfolio/assets/uploads/1785432498140-q9gfy4.webp"
-      },
-      {
         "number": "5-1",
         "name": "品牌设计  —  企业工业宣传册 ",
         "category": "画册设计",
@@ -499,39 +467,6 @@
           "/jack-portfolio/assets/uploads/1785740498323-lwha4j.jpg"
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1785748588676-hej6g2.jpg"
-      },
-      {
-        "number": "2-4",
-        "name": "小家电  —  手持风扇 ",
-        "category": "A+ 设计",
-        "tags": [
-          "跨境电商"
-        ],
-        "coverImg": "/jack-portfolio/assets/uploads/1785753888208-pc6wfi.jpg",
-        "images": [
-          "/jack-portfolio/assets/uploads/1785753902140-2la45i.jpg",
-          "/jack-portfolio/assets/uploads/1785753904764-7v8esr.jpg",
-          "/jack-portfolio/assets/uploads/1785753906748-5apoat.jpg",
-          "/jack-portfolio/assets/uploads/1785753909169-03s0qc.jpg",
-          "/jack-portfolio/assets/uploads/1785753911477-79fchf.jpg",
-          "/jack-portfolio/assets/uploads/1785753913878-sclglc.jpg",
-          "/jack-portfolio/assets/uploads/1785753916330-cburzl.jpg",
-          "/jack-portfolio/assets/uploads/1785753918896-vm0ya2.jpg",
-          "/jack-portfolio/assets/uploads/1785753921763-k5fwww.jpg",
-          "/jack-portfolio/assets/uploads/1785753924357-pzpcji.jpg",
-          "/jack-portfolio/assets/uploads/1785753926886-q5kk41.jpg",
-          "/jack-portfolio/assets/uploads/1785753929634-gd17yw.jpg",
-          "/jack-portfolio/assets/uploads/1785753932142-ooj6pf.jpg"
-        ]
-      },
-      {
-        "number": "3-2",
-        "name": "宠物  —  零食猫粮 ",
-        "category": "详情页",
-        "tags": [
-          "国内电商"
-        ],
-        "coverImg": "/jack-portfolio/assets/uploads/1786778795943-9p7u3i.png"
       }
     ]
   },
