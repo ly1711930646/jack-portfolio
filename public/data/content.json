@@ -67,9 +67,9 @@
       "/jack-portfolio/assets/uploads/1785497312127-m7qfib.webp",
       "/jack-portfolio/assets/uploads/1785497317499-0mro6x.webp",
       "/jack-portfolio/assets/uploads/1785497322084-s6eyxa.webp",
-      "assets/remote/placeholder-deco-bl.svg",
-      "assets/remote/placeholder-deco-br.svg",
-      "assets/remote/placeholder-banner.svg",
+      "/jack-portfolio/assets/uploads/1787333725973-pnlwhq.png",
+      "/jack-portfolio/assets/uploads/1787333772648-kdqm41.jpg",
+      "/jack-portfolio/assets/uploads/1787333785465-prhypp.jpg",
       "assets/remote/placeholder-portrait.svg",
       "assets/remote/placeholder-deco-tl.svg"
     ]
@@ -170,7 +170,8 @@
       "跨境电商",
       "国内电商",
       "品牌设计",
-      "AIGC"
+      "AIGC",
+      "运营设计"
     ],
     "items": [
       {
@@ -355,7 +356,6 @@
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1787328031046-e4j7vo.png",
         "images": [
-          "/jack-portfolio/assets/uploads/1787333309506-c16y1b.jpg",
           "/jack-portfolio/assets/uploads/1787327802470-zmkz98.jpg",
           "/jack-portfolio/assets/uploads/1787327806310-aih30k.jpg",
           "/jack-portfolio/assets/uploads/1787327809830-592pnu.jpg",
