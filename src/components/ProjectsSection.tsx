@@ -128,13 +128,13 @@ const ProjectCard = forwardRef<HTMLDivElement, {
           </div>
 
           {/* Bottom Row - 统一一张大图(主图或占位)，四边边距一致；
-              内层圆角 = 外层圆角 - padding，使四个角视觉上与外层卡片同心重合 */}
-          <div className="w-full">
+              内层圆角 = 外层圆角 - padding，使四个角视觉上与外层卡片同心重合。
+              移动端使用 object-contain + 高度自适应，避免后台上传的不同比例图片被裁切。 */}
+          <div className="w-full h-auto sm:h-[clamp(280px,38vw,560px)]">
             <SmartImage
               src={project.coverImg || FALLBACK_PLACEHOLDER}
               alt=""
-              className="w-full rounded-lg object-cover"
-              style={{ height: 'clamp(280px, 38vw, 560px)' }}
+              className="w-full h-auto sm:h-full rounded-lg object-contain sm:object-cover"
               loading="lazy"
             />
           </div>
