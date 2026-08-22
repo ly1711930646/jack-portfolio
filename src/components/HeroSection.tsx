@@ -304,7 +304,7 @@ const HeroSection = () => {
               {/* Title */}
               {hero.bannerText && (
                 <h1
-                  className="w-full text-[var(--title-mobile)] sm:text-[var(--title-tablet)] md:text-[var(--title-desktop)]"
+                  className="w-full text-[length:var(--title-mobile)] sm:text-[length:var(--title-tablet)] md:text-[length:var(--title-desktop)]"
                   style={{
                     fontFamily: 'Inter, "PingFang SC", "Microsoft YaHei", sans-serif',
                     '--title-desktop': `${titleFontPx}px`,
@@ -323,7 +323,7 @@ const HeroSection = () => {
               {/* Subtitle */}
               {hero.bannerSubtitle && (
                 <p
-                  className="text-[var(--subtitle-mobile)] sm:text-[var(--subtitle-tablet)] md:text-[var(--subtitle-desktop)]"
+                  className="text-[length:var(--subtitle-mobile)] sm:text-[length:var(--subtitle-tablet)] md:text-[length:var(--subtitle-desktop)]"
                   style={{
                     '--subtitle-desktop': `${subtitleFontSize}px`,
                     '--subtitle-tablet': `${subtitleFontPxTablet}px`,
