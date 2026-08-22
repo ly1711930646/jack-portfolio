@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useContent } from '../context/ContentContext'
 
@@ -9,7 +8,6 @@ const ACTIVE_COLOR = '#4A90FF' // same as CTA button
 const Navbar = () => {
   const { content, openProfile } = useContent()
   const { hero } = content
-  const [isOpen, setIsOpen] = useState(false)
   const [activeId, setActiveId] = useState('hero')
   const [lockedId, setLockedId] = useState<string | null>(null)
 
@@ -90,7 +88,7 @@ const Navbar = () => {
   return (
     <>
       {/* ── Nav bar capsule ── */}
-      <nav className="nav-glass fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-4 px-5 md:px-8 py-3 rounded-full mx-auto max-w-6xl mt-4 transition-opacity duration-300">
+      <nav className="nav-glass fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-3 sm:gap-4 px-6 sm:px-8 md:px-8 py-3 rounded-full mx-4 sm:mx-6 md:mx-auto max-w-6xl mt-4 transition-opacity duration-300">
         {/* Logo */}
         <a
           href="#hero"
@@ -147,93 +145,31 @@ const Navbar = () => {
           {hero.ctaText}
         </button>
 
-        {/* Mobile category links — shown inside top bar when menu is open */}
-        {isOpen && (
-          <div
-            className="md:hidden flex items-center gap-3 overflow-x-auto"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {hero.navLinks
-              .filter((link) => link.href.startsWith('#'))
-              .map((link) => {
-                const id = link.href.slice(1)
-                const isActive = activeId === id
-                return (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    className={`text-xs font-medium whitespace-nowrap transition-colors duration-300 ${
-                      isActive ? 'text-[#4A90FF]' : 'text-[#D7E2EA]/80 hover:text-white'
-                    }`}
-                    onClick={(e) => {
-                      scrollToSection(e, link.href)
-                      setIsOpen(false)
-                    }}
-                  >
-                    {link.label}
-                  </a>
-                )
-              })}
-          </div>
-        )}
-
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden text-[#D7E2EA]/70 hover:text-white transition-colors duration-300"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle menu"
+        {/* Mobile category links — always visible in top bar */}
+        <div
+          className="md:hidden flex items-center justify-end gap-3 sm:gap-4 overflow-x-auto"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {isOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
+          {hero.navLinks
+            .filter((link) => link.href.startsWith('#'))
+            .map((link) => {
+              const id = link.href.slice(1)
+              const isActive = activeId === id
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className={`text-sm sm:text-[15px] font-medium whitespace-nowrap transition-colors duration-300 ${
+                    isActive ? 'text-[#4A90FF]' : 'text-[#D7E2EA]/80 hover:text-white'
+                  }`}
+                  onClick={(e) => scrollToSection(e, link.href)}
+                >
+                  {link.label}
+                </a>
+              )
+            })}
+        </div>
       </nav>
-
-      {/* ── Mobile menu dropdown ── */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className="mobile-menu-glass md:hidden fixed top-20 left-4 right-4 z-50 rounded-2xl py-8 flex flex-col items-center gap-5"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-          >
-            {/* Non-hash links stay in dropdown; hash links moved to top bar */}
-            {hero.navLinks
-              .filter((link) => !link.href.startsWith('#'))
-              .map((link, i) => {
-                const baseClass = "uppercase text-sm tracking-[0.25em] transition-colors duration-300"
-                const motionProps = {
-                  initial: { opacity: 0, y: -8 } as const,
-                  animate: { opacity: 1, y: 0 } as const,
-                  transition: { duration: 0.3, delay: 0.05 + i * 0.06, ease: 'easeOut' } as const,
-                }
-                return (
-                  <motion.a
-                    key={link.href}
-                    href={link.href}
-                    className={`${baseClass} text-[#D7E2EA]/90 font-light hover:text-white`}
-                    {...motionProps}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {link.label}
-                  </motion.a>
-                )
-              })}
-
-            {/* Mobile CTA — glass capsule matching the nav bar */}
-            <motion.button
-              type="button"
-              className="mt-2 nav-glass-button text-sm font-bold px-7 py-3 rounded-full cursor-pointer"
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.35, ease: 'easeOut' }}
-              onClick={() => { setIsOpen(false); handleLiquidMetalProfile() }}
-            >
-              {hero.ctaText}
-            </motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   )
 }
