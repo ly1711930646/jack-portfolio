@@ -1,6 +1,7 @@
 import { useContent } from '../context/ContentContext'
 import { SmartImage } from './SmartImage'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import VaporizeTextCycle, { Tag } from './VaporizeTextCycle'
 
 const TRAIL_EMOJIS = ['🔥', '✨', '⚡', '💫', '🌟', '💡', '🎨', '🚀', '🌈', '💥', '🪐', '⭐']
 
@@ -300,18 +301,26 @@ const HeroSection = () => {
               {/* Title */}
               {hero.bannerText && (
                 <div className="w-full flex items-center justify-center">
-                  <h1
-                    className="leading-tight"
-                    style={{
+                  <VaporizeTextCycle
+                    texts={[hero.bannerText]}
+                    font={{
                       fontFamily: 'Inter, "PingFang SC", "Microsoft YaHei", sans-serif',
                       fontSize: `${titleFontPx}px`,
-                      color: hero.bannerTextColor,
                       fontWeight: bannerFontWeight,
-                      textAlign: (hero.bannerTextAlign as 'left' | 'center' | 'right') || 'center',
                     }}
-                  >
-                    {hero.bannerText}
-                  </h1>
+                    color={hero.bannerTextColor}
+                    spread={5}
+                    density={5}
+                    animation={{
+                      vaporizeDuration: 1.2,
+                      fadeInDuration: 1.2,
+                      waitDuration: 0.4,
+                    }}
+                    direction="left-to-right"
+                    alignment={(hero.bannerTextAlign as 'left' | 'center' | 'right') || 'center'}
+                    tag={Tag.H1}
+                    interactive
+                  />
                 </div>
               )}
 

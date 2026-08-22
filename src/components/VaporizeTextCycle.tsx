@@ -89,16 +89,6 @@ type FireworkFlash = {
   radius: number
 }
 
-// 暖色调（红/金/橙/粉），符合「红色系」烟花观感；存为 "r, g, b" 便于拼 rgba
-const FIREWORK_COLORS = [
-  '255, 70, 70',    // 红
-  '255, 130, 50',   // 橙
-  '255, 200, 70',   // 金
-  '255, 95, 130',   // 玫红
-  '255, 165, 95',   // 琥珀
-  '255, 240, 200',  // 暖白
-]
-
 declare global {
   interface HTMLCanvasElement {
     textBoundaries?: TextBoundaries
@@ -241,35 +231,6 @@ export default function VaporizeTextCycle({
     },
     [globalDpr]
   )
-
-  const launchFireworks = useCallback((canvas: HTMLCanvasElement, count = 5, dpr = 1) => {
-    const rockets = fireworksRef.current.rockets
-    const w = canvas.width
-    const h = canvas.height
-    const gravity = 0.16 * dpr
-    for (let i = 0; i < count; i++) {
-      // 从底部较宽区域发射，覆盖左右两侧
-      const startX = w * (0.05 + Math.random() * 0.9)
-      const startY = h
-      // 爆点高度扩展到屏幕上方 10%~55%，让烟花布满整个页面范围
-      const targetY = h * (0.10 + Math.random() * 0.45)
-      // 由能量守恒估算初速度，使火箭恰好在 targetY 附近到达顶点自然炸开
-      const vy0 = -Math.sqrt(Math.max(0, 2 * gravity * (startY - targetY))) * (0.94 + Math.random() * 0.12)
-      rockets.push({
-        x: startX,
-        y: startY,
-        px: startX,
-        py: startY,
-        // 给一点水平漂移/风力，让弧线横跨页面
-        vx: (Math.random() - 0.5) * 1.6 * dpr,
-        vy: vy0,
-        gravity,
-        color: FIREWORK_COLORS[(Math.random() * FIREWORK_COLORS.length) | 0],
-        trail: [],
-        dead: false,
-      })
-    }
-  }, [])
 
   const explodeFirework = useCallback((x: number, y: number, color: string, dpr = 1) => {
     const { particles, flashes } = fireworksRef.current
@@ -446,12 +407,8 @@ export default function VaporizeTextCycle({
         vaporizeProgressRef.current = 0
         fadeOpacityRef.current = 1
         resetParticles(particlesRef.current)
+        // 仅触发文字粒子消散/重组动画，不再发射彩色烟花
         setAnimationState('vaporizing')
-        if (canvasRef.current) {
-          // 每次随机 8~12 枚，铺满整个视口但不至于过多
-          const rocketCount = 8 + Math.floor(Math.random() * 5)
-          launchFireworks(canvasRef.current, rocketCount, globalDpr)
-        }
       }
       return
     }
