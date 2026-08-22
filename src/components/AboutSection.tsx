@@ -321,7 +321,7 @@ const AboutSection = () => {
   const { about } = content
 
   return (
-    <section id="about" className="relative min-h-screen flex flex-col items-center justify-center bg-[#0C0C0C] px-5 sm:px-8 md:px-10 py-20 overflow-hidden">
+    <section id="about" className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-center bg-[#0C0C0C] px-5 sm:px-8 md:px-10 py-10 sm:py-12 md:py-20 overflow-hidden">
       {/* Decorative 3D Images */}
       <DecorativeImage
         src={about.decorativeImages.topLeft}
@@ -352,7 +352,7 @@ const AboutSection = () => {
       />
 
       {/* Content */}
-      <div className="relative z-20 flex flex-col items-center gap-6 sm:gap-10 md:gap-16">
+      <div className="relative z-20 flex flex-col items-center gap-5 sm:gap-8 md:gap-16">
         <FadeIn as="h2" delay={0} y={40} className="hero-heading font-black uppercase leading-none tracking-tight text-center" style={{ fontSize: 'clamp(2.5rem, 10vw, 160px)' }}>
           {about.title}
         </FadeIn>
@@ -364,7 +364,7 @@ const AboutSection = () => {
         />
       </div>
 
-      <div className="relative z-20 mt-10 sm:mt-16 md:mt-24">
+      <div className="relative z-20 mt-8 sm:mt-12 md:mt-24">
         <FadeIn delay={0}>
           <ContactButton text="查看更多" onClick={openProfile} />
         </FadeIn>
