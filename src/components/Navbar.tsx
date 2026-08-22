@@ -147,6 +147,36 @@ const Navbar = () => {
           {hero.ctaText}
         </button>
 
+        {/* Mobile category links — shown inside top bar when menu is open */}
+        {isOpen && (
+          <div
+            className="md:hidden flex items-center gap-3 overflow-x-auto"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {hero.navLinks
+              .filter((link) => link.href.startsWith('#'))
+              .map((link) => {
+                const id = link.href.slice(1)
+                const isActive = activeId === id
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className={`text-xs font-medium whitespace-nowrap transition-colors duration-300 ${
+                      isActive ? 'text-[#4A90FF]' : 'text-[#D7E2EA]/80 hover:text-white'
+                    }`}
+                    onClick={(e) => {
+                      scrollToSection(e, link.href)
+                      setIsOpen(false)
+                    }}
+                  >
+                    {link.label}
+                  </a>
+                )
+              })}
+          </div>
+        )}
+
         {/* Mobile hamburger */}
         <button
           className="md:hidden text-[#D7E2EA]/70 hover:text-white transition-colors duration-300"
@@ -167,37 +197,28 @@ const Navbar = () => {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
           >
-            {hero.navLinks.map((link, i) => {
-              const id = link.href.startsWith('#') ? link.href.slice(1) : ''
-              const isActive = link.href.startsWith('#') && activeId === id
-              const baseClass = "uppercase text-sm tracking-[0.25em] transition-colors duration-300"
-              const motionProps = {
-                initial: { opacity: 0, y: -8 } as const,
-                animate: { opacity: 1, y: 0 } as const,
-                transition: { duration: 0.3, delay: 0.05 + i * 0.06, ease: 'easeOut' } as const,
-              }
-              return link.href.startsWith('#') ? (
-                <motion.a
-                  key={link.href}
-                  href={link.href}
-                  className={`${baseClass} ${isActive ? 'text-[#4A90FF] font-medium' : 'text-[#D7E2EA]/90 font-light hover:text-white'}`}
-                  {...motionProps}
-                  onClick={(e) => { scrollToSection(e, link.href); setIsOpen(false) }}
-                >
-                  {link.label}
-                </motion.a>
-              ) : (
-                <motion.a
-                  key={link.href}
-                  href={link.href}
-                  className={`${baseClass} text-[#D7E2EA]/90 font-light hover:text-white`}
-                  {...motionProps}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.label}
-                </motion.a>
-              )
-            })}
+            {/* Non-hash links stay in dropdown; hash links moved to top bar */}
+            {hero.navLinks
+              .filter((link) => !link.href.startsWith('#'))
+              .map((link, i) => {
+                const baseClass = "uppercase text-sm tracking-[0.25em] transition-colors duration-300"
+                const motionProps = {
+                  initial: { opacity: 0, y: -8 } as const,
+                  animate: { opacity: 1, y: 0 } as const,
+                  transition: { duration: 0.3, delay: 0.05 + i * 0.06, ease: 'easeOut' } as const,
+                }
+                return (
+                  <motion.a
+                    key={link.href}
+                    href={link.href}
+                    className={`${baseClass} text-[#D7E2EA]/90 font-light hover:text-white`}
+                    {...motionProps}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </motion.a>
+                )
+              })}
 
             {/* Mobile CTA — glass capsule matching the nav bar */}
             <motion.button
