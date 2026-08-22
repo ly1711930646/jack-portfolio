@@ -531,6 +531,24 @@
           "/jack-portfolio/assets/uploads/1787337895403-623wk8.jpg"
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1787338160266-msljfk.jpg"
+      },
+      {
+        "number": "5-3",
+        "name": "品牌设计  —  企业宣传册 ",
+        "category": "品牌设计",
+        "tags": [
+          "画册设计"
+        ],
+        "coverImg": "/jack-portfolio/assets/uploads/1787381119506-8fc6hr.png",
+        "images": [
+          "/jack-portfolio/assets/uploads/1787381132685-xvlgq0.jpg",
+          "/jack-portfolio/assets/uploads/1787381135706-86p13k.jpg",
+          "/jack-portfolio/assets/uploads/1787381158510-kmrzjc.jpg",
+          "/jack-portfolio/assets/uploads/1787381173898-j1mh46.jpg",
+          "/jack-portfolio/assets/uploads/1787381177256-yb3nfr.jpg",
+          "/jack-portfolio/assets/uploads/1787381180189-s5y7h3.jpg",
+          "/jack-portfolio/assets/uploads/1787381183295-d8pe3l.jpg"
+        ]
       }
     ]
   },
