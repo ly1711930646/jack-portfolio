@@ -252,14 +252,18 @@ const HeroSection = () => {
   const { content } = useContent()
   const { hero } = content
 
-  // 字号直接使用后台设置的值，与后台预览保持一致
+  // 字号直接使用后台设置的值，与后台预览保持一致；移动端按比例缩小
   const bannerFontSize = parseInt(hero.bannerTextSize) || 18
   const titleFontPx = Math.max(32, bannerFontSize)
+  const titleFontPxTablet = Math.max(28, Math.round(titleFontPx * 0.65))
+  const titleFontPxMobile = Math.max(22, Math.round(titleFontPx * 0.42))
 
   const hasBanner = !!(hero.bannerVideo || hero.bannerImage)
   const bannerFontWeight = parseInt(hero.bannerTextWeight) || 700
 
   const subtitleFontSize = parseInt(hero.bannerSubtitleSize) || 18
+  const subtitleFontPxTablet = Math.max(14, Math.round(subtitleFontSize * 0.9))
+  const subtitleFontPxMobile = Math.max(12, Math.round(subtitleFontSize * 0.75))
   const subtitleColor = hero.bannerSubtitleColor || '#FFFFFF'
   const subtitleLineHeight = parseFloat(hero.bannerSubtitleLineHeight) || 1.6
   const subtitleFontWeight = parseInt(hero.bannerSubtitleWeight) || 300
@@ -300,15 +304,17 @@ const HeroSection = () => {
               {/* Title */}
               {hero.bannerText && (
                 <h1
-                  className="w-full"
+                  className="w-full text-[var(--title-mobile)] sm:text-[var(--title-tablet)] md:text-[var(--title-desktop)]"
                   style={{
                     fontFamily: 'Inter, "PingFang SC", "Microsoft YaHei", sans-serif',
-                    fontSize: `clamp(28px, 4vw + 16px, ${titleFontPx}px)`,
+                    '--title-desktop': `${titleFontPx}px`,
+                    '--title-tablet': `${titleFontPxTablet}px`,
+                    '--title-mobile': `${titleFontPxMobile}px`,
                     fontWeight: bannerFontWeight,
                     color: hero.bannerTextColor,
                     textAlign: (hero.bannerTextAlign as 'left' | 'center' | 'right') || 'center',
                     lineHeight: 1.2,
-                  }}
+                  } as React.CSSProperties}
                 >
                   {hero.bannerText}
                 </h1>
@@ -317,12 +323,15 @@ const HeroSection = () => {
               {/* Subtitle */}
               {hero.bannerSubtitle && (
                 <p
+                  className="text-[var(--subtitle-mobile)] sm:text-[var(--subtitle-tablet)] md:text-[var(--subtitle-desktop)]"
                   style={{
-                    fontSize: `clamp(14px, 1.2vw + 10px, ${subtitleFontSize}px)`,
+                    '--subtitle-desktop': `${subtitleFontSize}px`,
+                    '--subtitle-tablet': `${subtitleFontPxTablet}px`,
+                    '--subtitle-mobile': `${subtitleFontPxMobile}px`,
                     color: subtitleColor,
                     lineHeight: subtitleLineHeight,
                     fontWeight: subtitleFontWeight,
-                  }}
+                  } as React.CSSProperties}
                 >
                   {hero.bannerSubtitle}
                 </p>
