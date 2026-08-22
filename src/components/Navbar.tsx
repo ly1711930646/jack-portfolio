@@ -147,7 +147,7 @@ const Navbar = () => {
 
         {/* Mobile category links — always visible in top bar */}
         <div
-          className="md:hidden flex items-center justify-end gap-3 sm:gap-4 overflow-x-auto"
+          className="md:hidden flex flex-1 items-center justify-around overflow-x-auto"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {hero.navLinks
@@ -159,7 +159,7 @@ const Navbar = () => {
                 <a
                   key={link.href}
                   href={link.href}
-                  className={`text-sm sm:text-[15px] font-medium whitespace-nowrap transition-colors duration-300 ${
+                  className={`text-[15px] sm:text-base font-medium whitespace-nowrap transition-colors duration-300 ${
                     isActive ? 'text-[#4A90FF]' : 'text-[#D7E2EA]/80 hover:text-white'
                   }`}
                   onClick={(e) => scrollToSection(e, link.href)}
