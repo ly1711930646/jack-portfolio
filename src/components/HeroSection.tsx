@@ -291,10 +291,10 @@ const HeroSection = () => {
       {/* Banner Content */}
       {hasBanner && hero.bannerText && (
         <div
-          className="absolute inset-0 z-10 flex flex-col items-center justify-start pt-[8%] px-6 sm:px-12 md:px-16 lg:px-20"
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6 sm:px-12 md:px-16 lg:px-20"
         >
           <div
-            className="text-center flex flex-col items-center gap-10"
+            className="text-center flex flex-col items-center gap-5"
             style={{ width: 'fit-content', maxWidth: '100%', transform: `translateY(${contentOffsetY}px)` }}
           >
               {/* Title */}
@@ -303,7 +303,7 @@ const HeroSection = () => {
                   className="w-full"
                   style={{
                     fontFamily: 'Inter, "PingFang SC", "Microsoft YaHei", sans-serif',
-                    fontSize: `${titleFontPx}px`,
+                    fontSize: `clamp(28px, 4vw + 16px, ${titleFontPx}px)`,
                     fontWeight: bannerFontWeight,
                     color: hero.bannerTextColor,
                     textAlign: (hero.bannerTextAlign as 'left' | 'center' | 'right') || 'center',
@@ -318,7 +318,7 @@ const HeroSection = () => {
               {hero.bannerSubtitle && (
                 <p
                   style={{
-                    fontSize: `${subtitleFontSize}px`,
+                    fontSize: `clamp(14px, 1.2vw + 10px, ${subtitleFontSize}px)`,
                     color: subtitleColor,
                     lineHeight: subtitleLineHeight,
                     fontWeight: subtitleFontWeight,
