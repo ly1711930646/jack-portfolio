@@ -292,7 +292,7 @@ const HeroSection = () => {
       {/* Banner Content */}
       {hasBanner && hero.bannerText && (
         <div
-          className="absolute inset-0 z-10 flex flex-col items-center justify-start pt-[12%] px-6 sm:px-12 md:px-16 lg:px-20"
+          className="absolute inset-0 z-10 flex flex-col items-center justify-start pt-[5%] px-6 sm:px-12 md:px-16 lg:px-20"
         >
           <div
             className="text-center flex flex-col items-center gap-6"
