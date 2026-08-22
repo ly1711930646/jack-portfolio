@@ -352,8 +352,8 @@ const AboutSection = () => {
       />
 
       {/* Content */}
-      <div className="relative z-20 flex flex-col items-center gap-10 sm:gap-14 md:gap-16">
-        <FadeIn as="h2" delay={0} y={40} className="hero-heading font-black uppercase leading-none tracking-tight text-center" style={{ fontSize: 'clamp(3rem, 12vw, 160px)' }}>
+      <div className="relative z-20 flex flex-col items-center gap-6 sm:gap-10 md:gap-16">
+        <FadeIn as="h2" delay={0} y={40} className="hero-heading font-black uppercase leading-none tracking-tight text-center" style={{ fontSize: 'clamp(2.5rem, 10vw, 160px)' }}>
           {about.title}
         </FadeIn>
 
@@ -364,7 +364,7 @@ const AboutSection = () => {
         />
       </div>
 
-      <div className="relative z-20 mt-16 sm:mt-20 md:mt-24">
+      <div className="relative z-20 mt-10 sm:mt-16 md:mt-24">
         <FadeIn delay={0}>
           <ContactButton text="查看更多" onClick={openProfile} />
         </FadeIn>
