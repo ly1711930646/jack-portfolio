@@ -6,7 +6,8 @@ import { SmartImage } from './SmartImage'
  * 图片走廊 Banner
  *
  * 桌面（web）端：参考用户提供的设计稿 —— 卡片排成一条自右向左流动的带子，
- *   最右侧最大、最实，越往左越小、越透明，最终淡出消失（新卡片在右侧生长出现）。
+ *   最右侧最大，越往左越小；前几张一律保持完全不透明，只有即将离场的
+ *   最后一张平滑渐隐到消失（新卡片在右侧生长出现）。
  *   卡片保持恒定的中心间距，因此层层叠压、只露出左侧一条边；跟随各自图片的真实比例。
  *
  * 移动端：维持原先的「走廊」逻辑（自中心开口不断涌出、向两侧展开）。
@@ -66,8 +67,9 @@ function interpolateSlot(values: number[], slot: number) {
 }
 
 // ───────────────────────── 桌面（单向流动带）参数 ─────────────────────────
-// 参考设计稿：卡片排成一条自右向左流动的带子 —— 最右侧最大、最实，
-// 越往左越小、越透明，最终淡出消失；新卡片在右侧「生长」出现。
+// 参考设计稿：卡片排成一条自右向左流动的带子 —— 最右侧最大，
+// 越往左越小；前几张保持实底，只有最后一张平滑渐隐消失；
+// 新卡片在右侧「生长」出现。
 // 相邻卡片中心间距恒定（< 卡片宽度），因此层层叠压、露出左侧一条边。
 const FAN = {
   OUTER_SCALE_RATIO: 0.33, // 最右侧（最大）卡片宽度 ≈ 0.33 × 视口宽度
@@ -82,7 +84,11 @@ const FAN = {
   CURVE_SLOT_STEP: 2,
   SCALE: [1, 0.74, 0.55, 0.41, 0.3, 0.22],
   ROTATION: [2, 3.5, 5, 7, 9, 11],
-  OPACITY: [1, 0.86, 0.72, 0.58, 0.45, 0.33],
+  // 透明度：前面的卡片一律保持完全不透明（不再逐级压暗），
+  // 只有最左侧「最后一张」才开始渐隐 —— 渐隐行程贴着消失边界，
+  // 在 slot 到达 VISIBLE_SLOTS 之前平滑归零，避免卡片到边界被硬切掉。
+  FADE_SLOT_SPAN: 0.65, // 渐变区间 = slot [VISIBLE_SLOTS - 0.65, VISIBLE_SLOTS]，1 → 0
+  FADE_CURVE: 1.7, // 曲线指数：>1 = 前段仍保持较实、临近边界才加速溶掉；两端导数有限，不硬切
 }
 
 // ───────────────────────── 移动端（走廊）参数（沿用此前逻辑） ─────────────────────────
@@ -335,7 +341,16 @@ const ImageCorridorBanner = ({
             birth = easeInOut(clamp(slot / FAN.BIRTH_SLOTS))
             scale = interpolateSlot(FAN.SCALE, s) * outerScale * (0.3 + 0.7 * birth)
             rotation = interpolateSlot(FAN.ROTATION, s)
-            opacityFactor = interpolateSlot(FAN.OPACITY, s)
+            // 前几张一律实底；只有即将离场的最后一张平滑淡出到 0
+            const fadeStart = FAN.VISIBLE_SLOTS - FAN.FADE_SLOT_SPAN
+            opacityFactor =
+              slot <= fadeStart
+                ? 1
+                : 1 -
+                  Math.pow(
+                    clamp((slot - fadeStart) / FAN.FADE_SLOT_SPAN),
+                    FAN.FADE_CURVE,
+                  )
             // 最右（slot 0）最大 → 越往左越小、渐隐消失
             x = (FAN.SPAWN_X_RATIO - slot * FAN.TRAVEL_RATIO) * width
             visible = imagesStarted && streamAge >= 0 && slot <= maxVisible ? 1 : 0
