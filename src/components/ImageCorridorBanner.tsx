@@ -5,9 +5,9 @@ import { SmartImage } from './SmartImage'
 /**
  * 图片走廊 Banner
  *
- * 桌面（web）端：参考用户提供的设计稿 —— 左右对称两簇卡片扇形铺开，
- *   中心留白形成开口，越靠近中心卡片越大、越靠外越小且渐隐，保持持续向两侧流动散开的动效。
- *   卡片跟随各自图片的真实比例（横向为主）。
+ * 桌面（web）端：参考用户提供的设计稿 —— 卡片排成一条自右向左流动的带子，
+ *   最右侧最大、最实，越往左越小、越透明，最终淡出消失（新卡片在右侧生长出现）。
+ *   卡片保持恒定的中心间距，因此层层叠压、只露出左侧一条边；跟随各自图片的真实比例。
  *
  * 移动端：维持原先的「走廊」逻辑（自中心开口不断涌出、向两侧展开）。
  *
@@ -65,17 +65,24 @@ function interpolateSlot(values: number[], slot: number) {
   )
 }
 
-// ───────────────────────── 桌面（扇形）参数 ─────────────────────────
-// 说明：越靠中心（slot 0）越大、旋转越大；向外渐小、渐隐。
+// ───────────────────────── 桌面（单向流动带）参数 ─────────────────────────
+// 参考设计稿：卡片排成一条自右向左流动的带子 —— 最右侧最大、最实，
+// 越往左越小、越透明，最终淡出消失；新卡片在右侧「生长」出现。
+// 相邻卡片中心间距恒定（< 卡片宽度），因此层层叠压、露出左侧一条边。
 const FAN = {
-  OUTER_SCALE_RATIO: 0.22, // 最内侧卡片宽度 ≈ 0.22 × 视口宽度
-  VISIBLE_SLOTS: 6.5,
-  GAP_HALF_RATIO: 0.035, // 中心留白半宽 = 0.035 × 视口宽
-  SPREAD_RATIO: 0.27, // 单簇铺开宽度 = 0.27 × 视口宽
-  BIRTH_SLOTS: 0.35, // 卡片在开口边缘淡入生长消耗的 slot
-  SCALE: [1.0, 0.98, 0.92, 0.84, 0.74, 0.63, 0.52, 0.42],
-  ROTATION: [34, 31, 28, 24, 20, 16, 13, 11],
-  OPACITY: [1, 1, 0.94, 0.84, 0.72, 0.55, 0.4, 0.26],
+  OUTER_SCALE_RATIO: 0.33, // 最右侧（最大）卡片宽度 ≈ 0.33 × 视口宽度
+  MAX_WIDTH_VH: 0.52, // 同时受视口高度约束（宽而矮的屏幕上不至于过大压到标题）
+  VISIBLE_SLOTS: 3.25, // 同屏可见卡片数 = VISIBLE_SLOTS / SLOT_STEP ≈ 6 张
+  SLOT_STEP: 0.5, // 每对卡片各占半个 slot（单向流动，不再镜像）
+  SPAWN_X_RATIO: 0.416, // slot 0（刚出生卡片）中心相对视口中心的位置
+  TRAVEL_RATIO: 0.276, // 每个 slot 左移 = 0.276 × 视口宽（相邻卡片 0.138 × 视口宽，重叠叠压）
+  BIRTH_SLOTS: 0.2, // 卡片在右侧生长并淡入所消耗的 slot
+  // 缩放/透明度曲线的索引：slot 0.5（已长成的最大卡片）对应 index 0
+  CURVE_SLOT_OFFSET: 0.5,
+  CURVE_SLOT_STEP: 2,
+  SCALE: [1, 0.74, 0.55, 0.41, 0.3, 0.22],
+  ROTATION: [2, 3.5, 5, 7, 9, 11],
+  OPACITY: [1, 0.86, 0.72, 0.58, 0.45, 0.33],
 }
 
 // ───────────────────────── 移动端（走廊）参数（沿用此前逻辑） ─────────────────────────
@@ -212,84 +219,98 @@ const ImageCorridorBanner = ({
       const firstCard = cardRefs.current[0]
       const baseCardWidth = firstCard?.offsetWidth || width * 0.125
       const logicalCardHeight = baseCardWidth * 0.75
-      const outerScale = (window.innerWidth * P.OUTER_SCALE_RATIO) / baseCardWidth
+      const widthBudget = window.innerWidth * P.OUTER_SCALE_RATIO
+      const maxCardWidth = isDesktop
+        ? Math.min(widthBudget, window.innerHeight * FAN.MAX_WIDTH_VH)
+        : widthBudget
+      const outerScale = maxCardWidth / baseCardWidth
       const maxVisible = P.VISIBLE_SLOTS
       const streamPosition = getStreamPosition(elapsed)
       const imagesStarted = elapsed >= IMAGE_START
       const barProgress = easeOut((elapsed - BAR_START) / (BAR_END - BAR_START))
 
+      // 中心开口只服务于移动端走廊；桌面为单向流动带，不需要开口
       const aperture = apertureRef.current
       if (aperture) {
         aperture.style.setProperty('--open', barProgress.toFixed(4))
-        aperture.style.opacity = '1'
-        if (isDesktop) {
-          // 桌面：开口尺寸跟随最内侧卡片，形成干净的留白
-          const innerW = baseCardWidth * outerScale * FAN.SCALE[1]
-          const innerH = innerW * (firstCard?.dataset.ratio ? Number(firstCard.dataset.ratio) : 0.75)
-          aperture.style.width = `${innerW * 1.5}px`
-          aperture.style.height = `${innerH * 1.5}px`
-        }
+        aperture.style.opacity = isDesktop ? '0' : '1'
       }
+      const apertureHeight = aperture?.offsetHeight || 80
 
       for (let pairIndex = 0; pairIndex < pairCount; pairIndex += 1) {
         const rawStreamAge = streamPosition - pairIndex
         const streamAge =
           rawStreamAge >= 0 ? rawStreamAge % pairCount : rawStreamAge
 
-        let x: number
-        let scale: number
-        let rotation: number
-        let birth: number
-        let opacityFactor: number
+        // 移动端（走廊）：一对卡片共用同一 slot，向左右两侧对称展开
+        let pairX = 0
+        let pairScale = 0
+        let pairRotation = 0
+        let pairBirth = 0
+        let pairOpacity = 0
+        let pairVisible = 0
 
-        if (isDesktop) {
-          const slot = streamAge
-          const slotFraction = clampSlot(slot, maxVisible) / maxVisible
-          birth = easeInOut(clamp(streamAge / FAN.BIRTH_SLOTS))
-          const s = clampSlot(slot, FAN.SCALE.length - 1)
-          scale = interpolateSlot(FAN.SCALE, s) * outerScale * (0.2 + 0.8 * birth)
-          rotation = interpolateSlot(FAN.ROTATION, s)
-          opacityFactor = interpolateSlot(FAN.OPACITY, s)
-          // 卡片在「留白边缘」淡入生长，随后持续向两侧铺开、缩小、渐隐（保持流动动效）
-          x = FAN.GAP_HALF_RATIO * width + slotFraction * FAN.SPREAD_RATIO * width
-        } else {
+        if (!isDesktop) {
           const prePushProgress = easeIntoLinearMotion(
             (streamAge - CORRIDOR.PRE_PUSH_START_SLOT) /
               (CORRIDOR.PRE_PUSH_END_SLOT - CORRIDOR.PRE_PUSH_START_SLOT),
           )
           const birthProgress = easeInOut(streamAge / CORRIDOR.BIRTH_GROWTH_SLOTS)
           const slot = Math.max(streamAge - CORRIDOR.PRE_PUSH_END_SLOT, 0)
-          const apertureHeight = apertureRef.current?.offsetHeight || 80
           const centerScaleRatio = apertureHeight / (logicalCardHeight * outerScale)
           const scaleRatios = [centerScaleRatio, ...CORRIDOR.SLOT_SCALE_RATIO.slice(1)]
           const prePushDistance = baseCardWidth * centerScaleRatio * outerScale
-          birth = 0.2 + birthProgress * 0.8
-          scale = interpolateSlot(scaleRatios, slot) * outerScale
-          rotation =
-            interpolateSlot(
-              CORRIDOR.SLOT_ROTATION,
-              clamp(slot / maxVisible) * (CORRIDOR.SLOT_ROTATION.length - 1),
-            )
-          opacityFactor = 1
-          x =
+          pairBirth = 0.2 + birthProgress * 0.8
+          pairScale = interpolateSlot(scaleRatios, slot) * outerScale
+          pairRotation = interpolateSlot(
+            CORRIDOR.SLOT_ROTATION,
+            clamp(slot / maxVisible) * (CORRIDOR.SLOT_ROTATION.length - 1),
+          )
+          pairOpacity = 1
+          pairX =
             prePushDistance * prePushProgress +
             interpolateSlot(CORRIDOR.SLOT_TRAVEL, slot) * width * CORRIDOR.TRACK_SPACING
+          pairVisible = imagesStarted && streamAge >= 0 && streamAge <= maxVisible ? 1 : 0
         }
-
-        const visible =
-          imagesStarted && streamAge >= 0 && streamAge <= maxVisible ? 1 : 0
 
         for (let sideIndex = 0; sideIndex < 2; sideIndex += 1) {
           const card = cardRefs.current[pairIndex * 2 + sideIndex]
           if (!card) continue
-          const direction = sideIndex === 0 ? -1 : 1
-          card.style.setProperty('--x', `${direction * x}px`)
+
+          let x = pairX
+          let scale = pairScale
+          let rotation = pairRotation
+          let birth = pairBirth
+          let opacityFactor = pairOpacity
+          let visible = pairVisible
+          let mirror = sideIndex === 0 ? -1 : 1 // 移动端左右镜像
+          let zSlot = streamAge
+
+          if (isDesktop) {
+            // 桌面：单向流动带。每对的两张卡各占半个 slot，自右向左依次排列。
+            const slot = Math.max(streamAge + sideIndex * FAN.SLOT_STEP, 0)
+            const s = clampSlot(
+              (slot - FAN.CURVE_SLOT_OFFSET) * FAN.CURVE_SLOT_STEP,
+              FAN.SCALE.length - 1,
+            )
+            birth = easeInOut(clamp(slot / FAN.BIRTH_SLOTS))
+            scale = interpolateSlot(FAN.SCALE, s) * outerScale * (0.3 + 0.7 * birth)
+            rotation = interpolateSlot(FAN.ROTATION, s)
+            opacityFactor = interpolateSlot(FAN.OPACITY, s)
+            // 最右（slot 0）最大 → 越往左越小、渐隐消失
+            x = (FAN.SPAWN_X_RATIO - slot * FAN.TRAVEL_RATIO) * width
+            visible = imagesStarted && streamAge >= 0 && slot <= maxVisible ? 1 : 0
+            mirror = 1
+            zSlot = slot
+          }
+
+          card.style.setProperty('--x', `${mirror * x}px`)
           card.style.setProperty('--scale', scale.toFixed(4))
-          card.style.setProperty('--rotate', `${direction * -rotation}deg`)
+          card.style.setProperty('--rotate', `${mirror * -rotation}deg`)
           card.style.setProperty('--birth', birth.toFixed(4))
           card.style.opacity = (visible * opacityFactor * birth).toFixed(4)
           card.style.zIndex = String(
-            20 + Math.round((maxVisible - clampSlot(streamAge, maxVisible)) * 10),
+            20 + Math.round((maxVisible - clampSlot(zSlot, maxVisible)) * 10),
           )
         }
       }
@@ -351,7 +372,7 @@ const ImageCorridorBanner = ({
       {/* ── 图片走廊 / 扇形 ── */}
       <div
         ref={corridorRef}
-        className="absolute left-0 w-full z-10 pointer-events-none top-[42%] md:top-[36%] h-[56%]"
+        className="absolute left-0 w-full z-10 pointer-events-none top-[42%] md:top-[43%] h-[56%]"
         style={{
           perspective: '850px',
           perspectiveOrigin: '50% 50%',
@@ -391,8 +412,8 @@ const ImageCorridorBanner = ({
                   '--scale': '0.27',
                   '--rotate': '0deg',
                   '--birth': '0',
-                  '--base-shift': sideIndex === 0 ? '-100%' : '0%',
-                  '--origin-x': sideIndex === 0 ? '100%' : '0%',
+                  '--base-shift': isDesktop ? '-50%' : sideIndex === 0 ? '-100%' : '0%',
+                  '--origin-x': isDesktop ? '50%' : sideIndex === 0 ? '100%' : '0%',
                   aspectRatio: '4 / 3',
                   borderRadius: `${corridorRadius}px`,
                   backgroundColor: source.color,
