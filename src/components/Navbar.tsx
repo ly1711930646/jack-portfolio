@@ -101,32 +101,33 @@ const Navbar = () => {
         </a>
 
         {/* Desktop nav links */}
-        <div key={hero.navLinks.map((l) => l.href).join('|')} className="hidden md:flex items-center gap-8">
+        <div key={hero.navLinks.map((l) => l.href).join('|')} className="hidden md:flex items-center gap-1">
           {hero.navLinks.map((link) => {
             const id = link.href.startsWith('#') ? link.href.slice(1) : ''
             const isActive = link.href.startsWith('#') && activeId === id
             const baseClass =
-              'text-sm font-light transition-colors duration-300 whitespace-nowrap'
+              'relative px-3.5 py-1.5 rounded-full text-sm font-light transition-colors duration-300 whitespace-nowrap'
             const colorClass = isActive
-              ? `text-[${ACTIVE_COLOR}] font-normal`
+              ? 'text-white font-normal'
               : 'text-[#D7E2EA]/70 hover:text-white'
 
             return link.href.startsWith('#') ? (
               <a
                 key={link.href}
                 href={link.href}
-                className={`${baseClass} ${colorClass} relative py-1`}
+                className={`${baseClass} ${colorClass}`}
                 onClick={(e) => scrollToSection(e, link.href)}
               >
-                {link.label}
+                {/* 当前位置：蓝色胶囊高亮（字体白色），随切换在选项间滑动 */}
                 {isActive && (
                   <motion.span
-                    layoutId="nav-indicator"
-                    className="absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full"
+                    layoutId="nav-pill"
+                    className="absolute inset-0 rounded-full"
                     style={{ backgroundColor: ACTIVE_COLOR }}
                     transition={{ type: 'spring', stiffness: 420, damping: 32 }}
                   />
                 )}
+                <span className="relative z-10">{link.label}</span>
               </a>
             ) : (
               <Link key={link.href} to={link.href} className={`${baseClass} text-[#D7E2EA]/70 hover:text-white`}>
@@ -159,12 +160,20 @@ const Navbar = () => {
                 <a
                   key={link.href}
                   href={link.href}
-                  className={`text-[15px] sm:text-base font-medium whitespace-nowrap transition-colors duration-300 ${
-                    isActive ? 'text-[#4A90FF]' : 'text-[#D7E2EA]/80 hover:text-white'
+                  className={`relative px-2.5 py-1.5 rounded-full text-[15px] sm:text-base font-medium whitespace-nowrap transition-colors duration-300 ${
+                    isActive ? 'text-white' : 'text-[#D7E2EA]/80 hover:text-white'
                   }`}
                   onClick={(e) => scrollToSection(e, link.href)}
                 >
-                  {link.label}
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-pill-mobile"
+                      className="absolute inset-0 rounded-full"
+                      style={{ backgroundColor: ACTIVE_COLOR }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    />
+                  )}
+                  <span className="relative z-10">{link.label}</span>
                 </a>
               )
             })}
