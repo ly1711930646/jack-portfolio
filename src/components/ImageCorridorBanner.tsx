@@ -72,12 +72,12 @@ function interpolateSlot(values: number[], slot: number) {
 // 新卡片在右侧「生长」出现。
 // 相邻卡片中心间距恒定（< 卡片宽度），因此层层叠压、露出左侧一条边。
 const FAN = {
-  OUTER_SCALE_RATIO: 0.33, // 最右侧（最大）卡片宽度 ≈ 0.33 × 视口宽度
-  MAX_WIDTH_VH: 0.52, // 同时受视口高度约束（宽而矮的屏幕上不至于过大压到标题）
+  OUTER_SCALE_RATIO: 0.45, // 最右侧（最大）卡片宽度 ≈ 0.45 × 视口宽度
+  MAX_WIDTH_VH: 0.7, // 同时受视口高度约束（宽而矮的屏幕上不至于过大压到标题）
   VISIBLE_SLOTS: 3.25, // 同屏可见卡片数 = VISIBLE_SLOTS / SLOT_STEP ≈ 6 张
   SLOT_STEP: 0.5, // 每对卡片各占半个 slot（单向流动，不再镜像）
-  SPAWN_X_RATIO: 0.416, // slot 0（刚出生卡片）中心相对视口中心的位置
-  TRAVEL_RATIO: 0.276, // 每个 slot 左移 = 0.276 × 视口宽（相邻卡片 0.138 × 视口宽，重叠叠压）
+  SPAWN_X_RATIO: 0.43, // slot 0（刚出生卡片）中心相对视口中心的位置
+  TRAVEL_RATIO: 0.3, // 每个 slot 左移 = 0.3 × 视口宽（相邻卡片 0.15 × 视口宽，重叠叠压）
   BIRTH_SLOTS: 0.2, // 卡片在右侧生长并淡入所消耗的 slot
   // 缩放/透明度曲线的索引：slot 0.5（已长成的最大卡片）对应 index 0
   CURVE_SLOT_OFFSET: 0.5,
@@ -475,7 +475,7 @@ const ImageCorridorBanner = ({
       {/* ── 图片走廊 / 扇形 ── */}
       <div
         ref={corridorRef}
-        className="absolute left-0 w-full z-10 pointer-events-none top-[42%] md:top-[43%] h-[56%]"
+        className="absolute left-0 w-full z-10 pointer-events-none top-[42%] md:top-[35%] h-[56%]"
         style={{
           perspective: '850px',
           perspectiveOrigin: '50% 50%',
@@ -514,8 +514,8 @@ const ImageCorridorBanner = ({
               // outerScale = maxCardWidth / baseCardWidth，所以这里放大布局盒不会改变
               // 任何可见几何（位移/尺寸都与 outerScale 相互抵消），只是让栅格化分辨率够用。
               // 移动端走廊：最大显示宽 = 开口高 / 0.75 = 34.67vh（另一项 1.02×0.333vw = 34vw）
-              // 桌面单向带：最大显示宽 = min(0.33vw, 0.52vh)
-              className="absolute top-1/2 left-1/2 overflow-hidden w-[max(40vh,38vw)] md:w-[min(39vw,60vh)]"
+              // 桌面单向带：最大显示宽 = min(0.45vw, 0.70vh)
+              className="absolute top-1/2 left-1/2 overflow-hidden w-[max(40vh,38vw)] md:w-[min(53vw,83vh)]"
               style={
                 {
                   '--x': '0px',
