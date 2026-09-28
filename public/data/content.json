@@ -52,7 +52,8 @@
     "bannerStyle": "corridor",
     "corridorImages": [],
     "corridorBg": "#ffffff",
-    "corridorRadius": "10"
+    "corridorRadius": "10",
+    "corridorSpeed": "1"
   },
   "marquee": {
     "enabled": false,

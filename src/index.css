@@ -460,3 +460,109 @@ body.modal-open nav.nav-glass {
     animation: none !important;
   }
 }
+
+/* ── 后台：可左右拖动的速度滑块 ── */
+.speed-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+  /* --fill 由组件按当前数值注入，用于显示已选进度 */
+  background: linear-gradient(
+    to right,
+    #4a90ff 0%,
+    #4a90ff var(--fill, 0%),
+    rgba(255, 255, 255, 0.13) var(--fill, 0%),
+    rgba(255, 255, 255, 0.13) 100%
+  );
+}
+
+.speed-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 4px solid #4a90ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  transition: transform 0.12s ease;
+}
+
+.speed-range:hover::-webkit-slider-thumb,
+.speed-range:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.12);
+}
+
+.speed-range:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+.speed-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 4px solid #4a90ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+.speed-range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.speed-range:focus-visible {
+  box-shadow: 0 0 0 3px rgba(74, 144, 255, 0.28);
+}
+
+/* ── 后台：走廊速度迷你预览（纯 CSS，duration 由速度决定） ── */
+.speed-preview {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.speed-preview-card {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  height: 58%;
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+  transform-origin: center;
+  animation-name: speed-preview-flow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: left, transform, opacity;
+}
+
+@keyframes speed-preview-flow {
+  0% {
+    left: 100%;
+    transform: translateY(-50%) scale(0.86) rotate(2deg);
+    opacity: 0;
+  }
+  7% {
+    left: 92%;
+    transform: translateY(-50%) scale(1) rotate(2deg);
+    opacity: 1;
+  }
+  100% {
+    left: -22%;
+    transform: translateY(-50%) scale(0.3) rotate(9deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speed-preview-card {
+    animation: none;
+    opacity: 0.5;
+  }
+}

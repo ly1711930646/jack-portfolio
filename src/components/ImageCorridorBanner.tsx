@@ -124,6 +124,9 @@ const DECELERATION = (STEADY_SPEED - INITIAL_SPEED) / (FILL_DURATION / 1000)
 
 const clampSlot = (slot: number, max: number) => clamp(slot, 0, max)
 
+/** 首帧（还没有上一帧时间戳时）使用的参考帧间隔 */
+const REFERENCE_FRAME_MS = 1000 / 60
+
 /** 解析 #RRGGBB / #RGB，返回 0~1 亮度；解析失败返回 0（按深色处理） */
 const luminanceOf = (color: string) => {
   const hex = (color || '').trim().replace('#', '')
@@ -141,16 +144,25 @@ const luminanceOf = (color: string) => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
 }
 
-function getStreamPosition(elapsed: number) {
-  const motionElapsed = Math.max(elapsed - IMAGE_START, 0) / 1000
+/**
+ * 动画时间 t（秒，自流动开始计时）累计推进的 stream 位置。
+ * 先「快速涌出 + 减速」填满走廊（FILL_DURATION），之后进入匀速流动。
+ * 写成积分形式后，速度倍率变化时只需缩放每帧增量，位置不会跳变。
+ */
+function fillIntegral(t: number) {
+  if (t <= 0) return 0
   const fillSeconds = FILL_DURATION / 1000
-  if (motionElapsed <= fillSeconds) {
-    return (
-      INITIAL_SPEED * motionElapsed +
-      0.5 * DECELERATION * motionElapsed * motionElapsed
-    )
+  if (t <= fillSeconds) {
+    return INITIAL_SPEED * t + 0.5 * DECELERATION * t * t
   }
-  return FILLED_STREAM_POSITION + (motionElapsed - fillSeconds) * STEADY_SPEED
+  const fillArea =
+    INITIAL_SPEED * fillSeconds + 0.5 * DECELERATION * fillSeconds * fillSeconds
+  return fillArea + (t - fillSeconds) * STEADY_SPEED
+}
+
+/** motionElapsed：已按速度倍率缩放过的动画时间（ms，自组件挂载计时） */
+function getStreamPosition(motionElapsed: number) {
+  return fillIntegral(Math.max(motionElapsed - IMAGE_START, 0) / 1000)
 }
 
 const ImageCorridorBanner = ({
@@ -163,12 +175,25 @@ const ImageCorridorBanner = ({
   const corridorRef = useRef<HTMLDivElement>(null)
   const apertureRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
-  const startedAtRef = useRef(0)
+  // 真实时间（ms，未按速度缩放）：驱动开场开口动画的节奏，与速度无关
+  const clockRef = useRef(0)
+  // 动画时间（ms，已按速度缩放）：驱动图片流动
+  const motionRef = useRef(0)
+  const lastFrameAtRef = useRef(0)
+
+  // 流动速度倍率（后台可调，1 = 原始速度）。用 ref 传递，
+  // 这样后台拖动滑块时速度立即生效，且不会重置动画、不会跳帧。
+  const speedRef = useRef(1)
 
   // 卡片对数：小屏减半，避免移动端 DOM 与逐帧写入过多
   const [pairCount, setPairCount] = useState(() =>
     typeof window !== 'undefined' && window.innerWidth < 768 ? 14 : 30,
   )
+
+  const corridorSpeed = clamp(parseFloat(hero.corridorSpeed || '1') || 1, 0.1, 5)
+  useEffect(() => {
+    speedRef.current = corridorSpeed
+  }, [corridorSpeed])
 
   useEffect(() => {
     const onResize = () => setPairCount(window.innerWidth < 768 ? 14 : 30)
@@ -200,7 +225,7 @@ const ImageCorridorBanner = ({
     const corridor = corridorRef.current
     if (!corridor) return
 
-    startedAtRef.current = performance.now()
+    lastFrameAtRef.current = 0
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let frame = 0
     let running = true
@@ -208,12 +233,27 @@ const ImageCorridorBanner = ({
     const render = (now: number) => {
       if (!running) return
       if (document.hidden) {
+        lastFrameAtRef.current = 0
         frame = requestAnimationFrame(render)
         return
       }
-      const elapsed = reduceMotion
-        ? BAR_END + FILL_DURATION + 900
-        : now - startedAtRef.current
+
+      if (reduceMotion) {
+        // 关闭动效：直接落在「已填满」的静止状态，不随时间推进
+        clockRef.current = BAR_END + FILL_DURATION + 900
+        motionRef.current = clockRef.current
+      } else {
+        const dt = lastFrameAtRef.current
+          ? Math.min(now - lastFrameAtRef.current, 64)
+          : REFERENCE_FRAME_MS
+        lastFrameAtRef.current = now
+        clockRef.current += dt
+        // 速度倍率只作用于每帧增量：后台调速度时位置连续、不跳变
+        motionRef.current += dt * speedRef.current
+      }
+
+      const elapsed = clockRef.current
+      const streamPosition = getStreamPosition(motionRef.current)
 
       const width = corridor.clientWidth
       const firstCard = cardRefs.current[0]
@@ -225,7 +265,6 @@ const ImageCorridorBanner = ({
         : widthBudget
       const outerScale = maxCardWidth / baseCardWidth
       const maxVisible = P.VISIBLE_SLOTS
-      const streamPosition = getStreamPosition(elapsed)
       const imagesStarted = elapsed >= IMAGE_START
       const barProgress = easeOut((elapsed - BAR_START) / (BAR_END - BAR_START))
 

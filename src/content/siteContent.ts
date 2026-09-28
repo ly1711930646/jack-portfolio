@@ -42,6 +42,8 @@ export interface HeroContent {
     corridorBg: string
     /** 图片走廊卡片的圆角（px） */
     corridorRadius: string
+    /** 图片走廊的流动速度倍率（1 = 原始速度，越大越快） */
+    corridorSpeed: string
   }
 
 export interface DecorativeImages {
@@ -185,6 +187,7 @@ export const defaultContent: SiteContent = {
     corridorImages: [],
     corridorBg: '#0C0C0C',
     corridorRadius: '10',
+    corridorSpeed: '1',
   },
   marquee: {
     enabled: true,

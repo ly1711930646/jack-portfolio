@@ -535,6 +535,18 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
 
   // 图片走廊：图片列表增删改
   const corridorImages = hero.corridorImages || []
+  // 图片走廊：流动速度倍率（0.1 ~ 4，默认 1）
+  const SPEED_MIN = 0.1
+  const SPEED_MAX = 4
+  const corridorSpeedValue = Math.min(
+    Math.max(parseFloat(hero.corridorSpeed || '1') || 1, SPEED_MIN),
+    SPEED_MAX,
+  )
+  const corridorSpeedFill = `${((corridorSpeedValue - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)) * 100}%`
+  const setCorridorSpeed = (value: number) => {
+    const clamped = Math.min(Math.max(value, SPEED_MIN), SPEED_MAX)
+    onChange({ ...hero, corridorSpeed: clamped.toFixed(2) })
+  }
   const updateCorridorImage = (index: number, url: string) => {
     const next = [...corridorImages]
     next[index] = url
@@ -545,6 +557,38 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
   }
   const addCorridorImage = () => {
     onChange({ ...hero, corridorImages: [...corridorImages, ''] })
+  }
+
+  // 速度迷你预览：5 张小卡按同一路径循环流动，duration 由速度倍率决定，
+  // 负延迟让它们错开相位、形成连续的一条带子。
+  const SPEED_PREVIEW_CARDS = [
+    'linear-gradient(135deg, #ef5d45, #b83a28)',
+    'linear-gradient(135deg, #5977d9, #34499a)',
+    'linear-gradient(135deg, #f2c84b, #c79a1c)',
+    'linear-gradient(135deg, #8b55b5, #5c3480)',
+    'linear-gradient(135deg, #57ad82, #2f7a52)',
+  ]
+  const CorridorSpeedPreview = ({ speed, bg }: { speed: number; bg: string }) => {
+    const baseDuration = 8 / Math.max(speed, 0.1)
+    return (
+      <div
+        className="speed-preview h-24 mt-4"
+        style={{ background: bg || '#0C0C0C' }}
+        aria-hidden="true"
+      >
+        {SPEED_PREVIEW_CARDS.map((gradient, i) => (
+          <span
+            key={i}
+            className="speed-preview-card"
+            style={{
+              background: gradient,
+              animationDuration: `${baseDuration}s`,
+              animationDelay: `${(-i * baseDuration) / SPEED_PREVIEW_CARDS.length}s`,
+            }}
+          />
+        ))}
+      </div>
+    )
   }
 
   const BannerPreview = ({ hero, onChange }: { hero: HeroContent; onChange: (v: HeroContent) => void }) => {
@@ -754,6 +798,72 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
                 className="w-20 bg-[#161616] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#4A90FF]"
               />
             </div>
+          </div>
+
+          {/* 动画速度：左右拖动控制图片流动快慢 */}
+          <div className="rounded-xl border border-white/10 bg-[#0C0C0C] px-4 py-4 mb-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-white/50">滑动速度</label>
+                <span className="text-xs font-semibold text-[#4A90FF] tabular-nums">
+                  {corridorSpeedValue.toFixed(2)}×
+                </span>
+                {corridorSpeedValue === 1 && (
+                  <span className="text-[10px] text-white/30 border border-white/10 rounded px-1.5 py-0.5">
+                    默认
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCorridorSpeed(1)}
+                  className="text-[11px] text-white/40 hover:text-white/80 transition-colors"
+                >
+                  重置
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-white/35 whitespace-nowrap">慢</span>
+              <input
+                type="range"
+                min={SPEED_MIN}
+                max={SPEED_MAX}
+                step={0.05}
+                value={corridorSpeedValue}
+                onChange={(e) => setCorridorSpeed(parseFloat(e.target.value))}
+                className="speed-range flex-1"
+                style={{ '--fill': corridorSpeedFill } as React.CSSProperties}
+                aria-label="图片走廊滑动速度"
+              />
+              <span className="text-[11px] text-white/35 whitespace-nowrap">快</span>
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              {[
+                { label: '慢速', value: 0.5 },
+                { label: '默认', value: 1 },
+                { label: '快速', value: 2 },
+              ].map((preset) => (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => setCorridorSpeed(preset.value)}
+                  className={`text-[11px] rounded-full border px-3 py-1 transition-colors ${
+                    Math.abs(corridorSpeedValue - preset.value) < 0.001
+                      ? 'border-[#4A90FF] text-[#7FB2FF] bg-[#4A90FF]/10'
+                      : 'border-white/10 text-white/45 hover:border-white/25 hover:text-white/75'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-white/30 leading-relaxed">
+              左右拖动滑块调节图片从右向左流动的快慢（1.00× 为原始速度）。桌面端与移动端同时生效，保存后线上刷新即可看到。
+            </p>
+            <div className="mt-3 mb-1 text-[11px] text-white/30">速度预览</div>
+            <CorridorSpeedPreview speed={corridorSpeedValue} bg={hero.corridorBg || '#FFFFFF'} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
