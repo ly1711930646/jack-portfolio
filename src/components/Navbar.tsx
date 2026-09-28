@@ -106,7 +106,7 @@ const Navbar = () => {
             const id = link.href.startsWith('#') ? link.href.slice(1) : ''
             const isActive = link.href.startsWith('#') && activeId === id
             const baseClass =
-              'relative px-3.5 py-1.5 rounded-full text-sm font-light transition-colors duration-300 whitespace-nowrap'
+              'relative px-6 py-2.5 rounded-full text-sm font-light transition-colors duration-300 whitespace-nowrap'
             const colorClass = isActive
               ? 'text-white font-normal'
               : 'text-[#D7E2EA]/70 hover:text-white'
@@ -160,7 +160,7 @@ const Navbar = () => {
                 <a
                   key={link.href}
                   href={link.href}
-                  className={`relative px-2.5 py-1.5 rounded-full text-[15px] sm:text-base font-medium whitespace-nowrap transition-colors duration-300 ${
+                  className={`relative px-3.5 py-2 rounded-full text-[15px] sm:text-base font-medium whitespace-nowrap transition-colors duration-300 ${
                     isActive ? 'text-white' : 'text-[#D7E2EA]/80 hover:text-white'
                   }`}
                   onClick={(e) => scrollToSection(e, link.href)}
