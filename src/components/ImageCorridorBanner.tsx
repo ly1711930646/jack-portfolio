@@ -14,10 +14,14 @@ import { SmartImage } from './SmartImage'
  * - 每帧只写 CSS 变量（--x/--scale/--rotate/--birth）与 opacity/zIndex，避免 React 重渲染。
  */
 
-// ---- 参考站的运动参数 ----
+// ---- 运动参数 ----
+// 说明：缩放曲线被刻意「压平」（原参考站为 0.1 → 1.35，相差 13 倍），
+// 让中心与两侧卡片尺寸尽量接近、整体观感统一；旋转也同步收敛，避免透视过度。
 const SLOT_TRAVEL = [0, 0.06, 0.145, 0.255, 0.375, 0.485, 0.585]
-const SLOT_SCALE_RATIO = [0.1, 0.16, 0.27, 0.43, 0.68, 1, 1.35]
-const SLOT_ROTATION = [12, 16, 21, 27, 33, 39, 45]
+const SLOT_SCALE_RATIO = [0.5, 0.58, 0.66, 0.76, 0.86, 0.95, 1.02]
+const SLOT_ROTATION = [10, 13, 17, 21, 25, 29, 33]
+/** 最外侧卡片高度 ≈ OUTER_SCALE_RATIO × 1.02 × 视口高度 */
+const OUTER_SCALE_RATIO = 0.4
 const TRACK_SPACING = 0.9
 const BIRTH_GROWTH_SLOTS = 1
 const PRE_PUSH_START_SLOT = 0.55
@@ -34,6 +38,10 @@ const INITIAL_SPEED =
   (2 * FILLED_STREAM_POSITION) / (FILL_DURATION / 1000) - STEADY_SPEED
 const DECELERATION = (STEADY_SPEED - INITIAL_SPEED) / (FILL_DURATION / 1000)
 const MAX_VISIBLE_SLOT = 5.25
+
+/** 中心开口（＝中心最小卡片）尺寸：按视口高度给出，保证与卡片尺寸联动 */
+const APERTURE_HEIGHT_VH = 26
+const APERTURE_WIDTH_VH = APERTURE_HEIGHT_VH * 0.75
 
 const FALLBACK_COLORS = [
   '#ef5d45',
@@ -186,7 +194,7 @@ const ImageCorridorBanner = ({
       const firstCard = cardRefs.current[0]
       const baseCardWidth = firstCard?.offsetWidth || width * 0.125
       const baseCardHeight = (baseCardWidth * 4) / 3
-      const outerScale = (window.innerHeight * 0.8) / baseCardHeight
+      const outerScale = (window.innerHeight * OUTER_SCALE_RATIO) / baseCardHeight
       const apertureHeight = apertureRef.current?.offsetHeight || 80
       const centerScaleRatio = apertureHeight / (baseCardHeight * outerScale)
       const scaleRatios = [centerScaleRatio, ...SLOT_SCALE_RATIO.slice(1)]
@@ -294,7 +302,7 @@ const ImageCorridorBanner = ({
       {/* ── 图片走廊 ── */}
       <div
         ref={corridorRef}
-        className="absolute left-0 w-full z-10 pointer-events-none top-[34%] sm:top-[32%] md:top-[30%] h-[52%]"
+        className="absolute left-0 w-full z-10 pointer-events-none top-[46%] h-[56%]"
         style={{
           perspective: '850px',
           perspectiveOrigin: '50% 50%',
@@ -308,8 +316,8 @@ const ImageCorridorBanner = ({
           style={
             {
               '--open': 0,
-              width: 'clamp(210px, 15vw, 288px)',
-              height: 'clamp(54px, 5.6vw, 108px)',
+              width: `${APERTURE_WIDTH_VH}vh`,
+              height: `${APERTURE_HEIGHT_VH}vh`,
               borderRadius: `${corridorRadius}px`,
               background: corridorBg,
               transform: 'translate(-50%, -50%) scaleX(var(--open))',
