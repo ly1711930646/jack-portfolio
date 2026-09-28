@@ -409,7 +409,7 @@ const ImageCorridorBanner = ({
             </p>
           )}
 
-          {hero.bannerButtonText && (
+          {hero.bannerButtonEnabled !== false && hero.bannerButtonText && (
             <a
               href={hero.bannerButtonLink || undefined}
               onClick={(e) => {

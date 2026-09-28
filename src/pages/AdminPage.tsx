@@ -662,7 +662,7 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
                   {hero.bannerSubtitle}
                 </p>
               )}
-              {hero.bannerButtonText && (
+              {hero.bannerButtonEnabled !== false && hero.bannerButtonText && (
                 <button
                   className="mt-5 px-6 py-2 rounded-full"
                   style={{
@@ -923,7 +923,28 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
 
       {/* ===== 按钮 ===== */}
       <Card title="按钮">
-        <p className="text-xs text-white/40 mb-3">CTA 按钮（对应截图中的 Fit Your Space 按钮）</p>
+        <div className="flex items-start justify-between gap-5 mb-4">
+          <p className="text-xs text-white/40 leading-relaxed pt-0.5">CTA 按钮（对应截图中的 Fit Your Space 按钮）</p>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <span className="text-xs text-white/50 whitespace-nowrap">在前端展示</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={hero.bannerButtonEnabled !== false}
+              aria-label="在前端展示 Banner 按钮"
+              onClick={() => onChange({ ...hero, bannerButtonEnabled: hero.bannerButtonEnabled === false })}
+              className={`relative shrink-0 w-14 h-8 rounded-full transition-colors duration-200 cursor-pointer ${
+                hero.bannerButtonEnabled !== false ? 'bg-[#4A90FF]' : 'bg-white/15'
+              }`}
+            >
+              <span
+                className={`absolute top-1 left-0 w-6 h-6 rounded-full bg-white shadow transition-transform duration-200 ${
+                  hero.bannerButtonEnabled !== false ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label className="text-xs text-white/50 block mb-2">按钮文字</label>
