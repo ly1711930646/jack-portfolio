@@ -50,7 +50,7 @@
     "bannerButtonFontWeight": "500",
     "bannerStyle": "corridor",
     "corridorImages": [],
-    "corridorBg": "#0C0C0C",
+    "corridorBg": "#ffffff",
     "corridorRadius": "10"
   },
   "marquee": {
