@@ -31,7 +31,7 @@
     "bannerVideo": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260806_133255_956f653f-5d80-4b06-abd5-0f46c98b60fa.mp4",
     "bannerText": "Discovering that art makes \nlife more creative ",
     "bannerTextSize": "80",
-    "bannerTextColor": "#ffffff",
+    "bannerTextColor": "#000000",
     "bannerTextLineHeight": "0",
     "bannerTextWeight": "700",
     "bannerTextAlign": "center",
@@ -39,7 +39,7 @@
     "bannerContentOffsetY": "20",
     "bannerSubtitle": "SHOW YOUR BRILLIANCE TO THE FULLEST",
     "bannerSubtitleSize": "16",
-    "bannerSubtitleColor": "#FFFFFF",
+    "bannerSubtitleColor": "#000000",
     "bannerSubtitleLineHeight": "1.6",
     "bannerSubtitleWeight": "300",
     "bannerButtonText": "你好，👋",
@@ -50,7 +50,7 @@
     "bannerButtonFontWeight": "500",
     "bannerStyle": "corridor",
     "corridorImages": [],
-    "corridorBg": "#232323",
+    "corridorBg": "#ffffff",
     "corridorRadius": "10"
   },
   "marquee": {
