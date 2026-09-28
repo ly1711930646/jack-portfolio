@@ -20,8 +20,8 @@ import { SmartImage } from './SmartImage'
 const SLOT_TRAVEL = [0, 0.06, 0.145, 0.255, 0.375, 0.485, 0.585]
 const SLOT_SCALE_RATIO = [0.5, 0.58, 0.66, 0.76, 0.86, 0.95, 1.02]
 const SLOT_ROTATION = [10, 13, 17, 21, 25, 29, 33]
-/** 最外侧卡片高度 ≈ OUTER_SCALE_RATIO × 1.02 × 视口高度 */
-const OUTER_SCALE_RATIO = 0.4
+/** 最外侧卡片宽度 ≈ OUTER_SCALE_RATIO × 视口宽度（卡片跟随图片真实比例，故以宽度为基准约束） */
+const OUTER_SCALE_RATIO = 0.333
 const TRACK_SPACING = 0.9
 const BIRTH_GROWTH_SLOTS = 1
 const PRE_PUSH_START_SLOT = 0.55
@@ -193,10 +193,10 @@ const ImageCorridorBanner = ({
       const width = corridor.clientWidth
       const firstCard = cardRefs.current[0]
       const baseCardWidth = firstCard?.offsetWidth || width * 0.125
-      const baseCardHeight = (baseCardWidth * 4) / 3
-      const outerScale = (window.innerHeight * OUTER_SCALE_RATIO) / baseCardHeight
+      const logicalCardHeight = baseCardWidth * 0.75
+      const outerScale = (window.innerWidth * OUTER_SCALE_RATIO) / baseCardWidth
       const apertureHeight = apertureRef.current?.offsetHeight || 80
-      const centerScaleRatio = apertureHeight / (baseCardHeight * outerScale)
+      const centerScaleRatio = apertureHeight / (logicalCardHeight * outerScale)
       const scaleRatios = [centerScaleRatio, ...SLOT_SCALE_RATIO.slice(1)]
       const prePushDistance = baseCardWidth * centerScaleRatio * outerScale
 
@@ -302,7 +302,7 @@ const ImageCorridorBanner = ({
       {/* ── 图片走廊 ── */}
       <div
         ref={corridorRef}
-        className="absolute left-0 w-full z-10 pointer-events-none top-[46%] h-[56%]"
+        className="absolute left-0 w-full z-10 pointer-events-none top-[42%] md:top-[46%] h-[56%]"
         style={{
           perspective: '850px',
           perspectiveOrigin: '50% 50%',
@@ -344,7 +344,7 @@ const ImageCorridorBanner = ({
                   '--birth': '0',
                   '--base-shift': sideIndex === 0 ? '-100%' : '0%',
                   '--origin-x': sideIndex === 0 ? '100%' : '0%',
-                  aspectRatio: '3 / 4',
+                  aspectRatio: '4 / 3',
                   borderRadius: `${corridorRadius}px`,
                   backgroundColor: source.color,
                   opacity: 0,
@@ -363,6 +363,15 @@ const ImageCorridorBanner = ({
                   alt=""
                   loading="eager"
                   className="w-full h-full object-cover"
+                  onLoad={(e) => {
+                    const img = e.currentTarget as HTMLImageElement
+                    const w = img.naturalWidth
+                    const h = img.naturalHeight
+                    if (w && h) {
+                      const el = cardRefs.current[index]
+                      if (el) el.style.aspectRatio = `${w} / ${h}`
+                    }
+                  }}
                 />
               )}
             </div>
