@@ -38,7 +38,14 @@ export const mergeWithDefault = (rawSaved: Partial<SiteContent>): SiteContent =>
   const merged = {
     ...defaultContent,
     ...cleaned,
-    hero: { ...defaultContent.hero, ...cleaned.hero },
+    hero: {
+      ...defaultContent.hero,
+      ...cleaned.hero,
+      // 兼容旧数据：走廊图片必须是数组
+      corridorImages: Array.isArray(cleaned.hero?.corridorImages)
+        ? cleaned.hero!.corridorImages!
+        : defaultContent.hero.corridorImages,
+    },
     marquee: { ...defaultContent.marquee, ...cleaned.marquee },
     about: {
       ...defaultContent.about,

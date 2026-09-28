@@ -1,6 +1,7 @@
 import { useContent } from '../context/ContentContext'
 import { SmartImage } from './SmartImage'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import ImageCorridorBanner from './ImageCorridorBanner'
 
 const TRAIL_EMOJIS = ['🔥', '✨', '⚡', '💫', '🌟', '💡', '🎨', '🚀', '🌈', '💥', '🪐', '⭐']
 
@@ -272,6 +273,20 @@ const HeroSection = () => {
   const buttonFontSize = parseInt(hero.bannerButtonFontSize) || 14
   const buttonFontWeight = parseInt(hero.bannerButtonFontWeight) || 500
   const contentOffsetY = parseInt(hero.bannerContentOffsetY || '0')
+
+  // 图片走廊模式用图：优先后台上传的走廊图片，留空则自动取作品封面图
+  const corridorImages = useMemo(() => {
+    const uploaded = (hero.corridorImages || []).filter(Boolean)
+    if (uploaded.length > 0) return uploaded
+    return content.projects.items
+      .map((item) => item.coverImg)
+      .filter((src): src is string => !!src)
+  }, [hero.corridorImages, content.projects.items])
+
+  // 后台开关：图片走廊动效 或 原有视频/图片 Banner
+  if (hero.bannerStyle === 'corridor') {
+    return <ImageCorridorBanner hero={hero} images={corridorImages} />
+  }
 
   return (
     <section

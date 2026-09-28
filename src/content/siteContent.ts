@@ -32,6 +32,14 @@ export interface HeroContent {
     bannerButtonTextColor: string
     bannerButtonFontSize: string
     bannerButtonFontWeight: string
+    /** Banner 展示模式：'media' = 视频/图片背景（原有效果）；'corridor' = 图片走廊动效 */
+    bannerStyle: string
+    /** 图片走廊模式使用的图片列表；留空时自动取作品封面图 */
+    corridorImages: string[]
+    /** 图片走廊模式的背景色 */
+    corridorBg: string
+    /** 图片走廊卡片的圆角（px） */
+    corridorRadius: string
   }
 
 export interface DecorativeImages {
@@ -168,6 +176,10 @@ export const defaultContent: SiteContent = {
     bannerButtonTextColor: '#FFFFFF',
     bannerButtonFontSize: '14',
     bannerButtonFontWeight: '500',
+    bannerStyle: 'media',
+    corridorImages: [],
+    corridorBg: '#0C0C0C',
+    corridorRadius: '10',
   },
   marquee: {
     row1: [

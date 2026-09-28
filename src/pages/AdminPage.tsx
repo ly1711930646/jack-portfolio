@@ -533,6 +533,20 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
   const [dragOverSubtitleField, setDragOverSubtitleField] = useState<string | null>(null)
   const [dragOverButtonField, setDragOverButtonField] = useState<string | null>(null)
 
+  // 图片走廊：图片列表增删改
+  const corridorImages = hero.corridorImages || []
+  const updateCorridorImage = (index: number, url: string) => {
+    const next = [...corridorImages]
+    next[index] = url
+    onChange({ ...hero, corridorImages: next })
+  }
+  const removeCorridorImage = (index: number) => {
+    onChange({ ...hero, corridorImages: corridorImages.filter((_, i) => i !== index) })
+  }
+  const addCorridorImage = () => {
+    onChange({ ...hero, corridorImages: [...corridorImages, ''] })
+  }
+
   const BannerPreview = ({ hero, onChange }: { hero: HeroContent; onChange: (v: HeroContent) => void }) => {
     const containerRef = useRef<HTMLDivElement>(null)
     const [scale, setScale] = useState(1)
@@ -670,8 +684,129 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
 
   return (
     <div className="space-y-6">
+      <Card title="Banner 展示模式">
+        <p className="text-xs text-white/40 mb-3">选择首页首屏的展示方式，切换后前台立即按所选模式渲染，保存后同步到线上。</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[
+            { id: 'media', name: '视频 / 图片背景', desc: '全屏视频或图片背景 + 居中文案（原有效果）' },
+            { id: 'corridor', name: '图片走廊动效', desc: '图片成对从中心涌出，向两侧展开成透视长廊' },
+          ].map((mode) => {
+            const active = (hero.bannerStyle || 'media') === mode.id
+            return (
+              <button
+                key={mode.id}
+                type="button"
+                onClick={() => onChange({ ...hero, bannerStyle: mode.id })}
+                className={`text-left rounded-xl border px-4 py-3.5 transition-colors ${
+                  active
+                    ? 'border-[#4A90FF] bg-[#4A90FF]/10'
+                    : 'border-white/10 bg-[#161616] hover:border-white/25'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                      active ? 'border-[#4A90FF]' : 'border-white/30'
+                    }`}
+                  >
+                    {active && <span className="w-2 h-2 rounded-full bg-[#4A90FF]" />}
+                  </span>
+                  <span className={`text-sm font-medium ${active ? 'text-white' : 'text-[#D7E2EA]/80'}`}>
+                    {mode.name}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-white/40 leading-relaxed">{mode.desc}</p>
+              </button>
+            )
+          })}
+        </div>
+      </Card>
+
+      {(hero.bannerStyle || 'media') === 'corridor' && (
+        <Card title="图片走廊设置">
+          <p className="text-xs text-white/40 mb-4">
+            走廊里流动的图片。留空时自动使用「作品」中每张卡片的封面图。建议使用竖图或方图（卡片比例 3:4）。
+          </p>
+
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-4 mb-5">
+            <div className="flex items-center gap-3">
+              <label className="text-xs text-white/50 whitespace-nowrap">背景色</label>
+              <input
+                type="color"
+                value={hero.corridorBg || '#0C0C0C'}
+                onChange={(e) => onChange({ ...hero, corridorBg: e.target.value })}
+                className="w-10 h-9 rounded-lg border border-white/10 bg-transparent cursor-pointer"
+              />
+              <input
+                value={hero.corridorBg || '#0C0C0C'}
+                onChange={(e) => onChange({ ...hero, corridorBg: e.target.value })}
+                className="w-28 bg-[#161616] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#4A90FF]"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="text-xs text-white/50 whitespace-nowrap">卡片圆角（px）</label>
+              <input
+                type="number"
+                min={0}
+                max={48}
+                value={hero.corridorRadius || '10'}
+                onChange={(e) => onChange({ ...hero, corridorRadius: e.target.value })}
+                className="w-20 bg-[#161616] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#4A90FF]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {corridorImages.map((src, i) => (
+              <div key={i} className="bg-[#0C0C0C] rounded-xl border border-white/10 p-3">
+                <Input
+                  placeholder="https://example.com/pic.jpg"
+                  value={src}
+                  onChange={(e) => updateCorridorImage(i, e.target.value)}
+                />
+                <GitHubAssetUploader value={src} onPicked={(u) => updateCorridorImage(i, u)} />
+                {src ? (
+                  <ImagePreview src={src} />
+                ) : (
+                  <div className="mt-3 h-24 rounded-xl border border-dashed border-white/10 flex items-center justify-center text-xs text-white/25">
+                    暂无图片
+                  </div>
+                )}
+                <button
+                  onClick={() => removeCorridorImage(i)}
+                  className="mt-2 text-xs text-red-400 hover:text-red-300"
+                >
+                  删除
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-5">
+            <button
+              onClick={addCorridorImage}
+              className="text-sm text-[#4A90FF] hover:text-[#5C9CFF] font-medium"
+            >
+              + 添加图片
+            </button>
+            <GitHubAssetUploader
+              multiple
+              label="批量上传"
+              onPickedBatch={(urls) =>
+                onChange({ ...hero, corridorImages: [...corridorImages, ...urls] })
+              }
+            />
+          </div>
+        </Card>
+      )}
+
       <Card title="Banner 预览">
         <p className="text-xs text-white/40 mb-3">实时预览（按 1280×720 视口比例缩放，文字过大会自动截断）。在预览图中按住文字/按钮可上下拖动调整位置。</p>
+        {(hero.bannerStyle || 'media') === 'corridor' && (
+          <div className="mb-3 rounded-xl border border-[#4A90FF]/25 bg-[#4A90FF]/[0.07] px-4 py-3 text-xs text-[#9CC4FF] leading-relaxed">
+            当前是「图片走廊动效」模式 —— 此预览只反映文案样式与位置；走廊动效请直接打开首页查看。（下方的背景图片 / 背景视频仅在切回「视频 / 图片背景」时生效）
+          </div>
+        )}
         <BannerPreview hero={hero} onChange={onChange} />
         <div className="mt-4 flex items-center gap-3">
           <label className="text-xs text-white/50 whitespace-nowrap">垂直偏移（px）</label>
