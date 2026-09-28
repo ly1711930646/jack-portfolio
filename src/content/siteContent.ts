@@ -188,7 +188,7 @@ export const defaultContent: SiteContent = {
     bannerStyle: 'media',
     corridorImages: [],
     corridorBg: '#0C0C0C',
-    corridorRadius: '10',
+    corridorRadius: '24',
     corridorSpeed: '1',
     heroDotGridEnabled: true,
   },

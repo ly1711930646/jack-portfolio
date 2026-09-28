@@ -52,7 +52,7 @@
     "bannerStyle": "corridor",
     "corridorImages": [],
     "corridorBg": "#F1F0EC",
-    "corridorRadius": "10",
+    "corridorRadius": "24",
     "corridorSpeed": "0.60",
     "heroDotGridEnabled": true
   },
