@@ -47,7 +47,11 @@
     "bannerButtonColor": "#ffffff",
     "bannerButtonTextColor": "#000000",
     "bannerButtonFontSize": "14",
-    "bannerButtonFontWeight": "500"
+    "bannerButtonFontWeight": "500",
+    "bannerStyle": "corridor",
+    "corridorImages": [],
+    "corridorBg": "#0C0C0C",
+    "corridorRadius": "10"
   },
   "marquee": {
     "row1": [
