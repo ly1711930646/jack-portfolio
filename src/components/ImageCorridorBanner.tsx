@@ -3,55 +3,19 @@ import type { HeroContent } from '../content/siteContent'
 import { SmartImage } from './SmartImage'
 
 /**
- * 图片走廊 Banner（参考 web-image-motion 的 corridor 效果）
+ * 图片走廊 Banner
  *
- * 视觉流程：中心先裂开一道开口 → 图片成对从开口涌出 → 沿透视向两侧流动展开，
- * 越靠外越大、越转向侧面，形成一条无限循环的图片长廊。
+ * 桌面（web）端：参考用户提供的设计稿 —— 左右对称两簇卡片扇形铺开，
+ *   中心留白形成开口，越靠近中心卡片越大、越靠外越小且渐隐，保持持续向两侧流动散开的动效。
+ *   卡片跟随各自图片的真实比例（横向为主）。
  *
- * 实现要点（沿用参考站参数）：
- * - 每对卡片由 streamAge 推导 slot，slot 决定位移 / 缩放 / 旋转，插值使用单调三次 Hermite。
- * - streamAge 对 pair 数量取模实现无缝循环。
+ * 移动端：维持原先的「走廊」逻辑（自中心开口不断涌出、向两侧展开）。
+ *
+ * 实现要点：
  * - 每帧只写 CSS 变量（--x/--scale/--rotate/--birth）与 opacity/zIndex，避免 React 重渲染。
+ * - streamAge 对 pair 数量取模实现无缝循环。
+ * - 单调三次 Hermite 插值（interpolateSlot）保证运动不过冲。
  */
-
-// ---- 运动参数 ----
-// 说明：缩放曲线被刻意「压平」（原参考站为 0.1 → 1.35，相差 13 倍），
-// 让中心与两侧卡片尺寸尽量接近、整体观感统一；旋转也同步收敛，避免透视过度。
-const SLOT_TRAVEL = [0, 0.06, 0.145, 0.255, 0.375, 0.485, 0.585]
-const SLOT_SCALE_RATIO = [0.5, 0.58, 0.66, 0.76, 0.86, 0.95, 1.02]
-const SLOT_ROTATION = [10, 13, 17, 21, 25, 29, 33]
-/** 最外侧卡片宽度 ≈ OUTER_SCALE_RATIO × 视口宽度（卡片跟随图片真实比例，故以宽度为基准约束） */
-const OUTER_SCALE_RATIO = 0.333
-const TRACK_SPACING = 0.9
-const BIRTH_GROWTH_SLOTS = 1
-const PRE_PUSH_START_SLOT = 0.55
-const PRE_PUSH_END_SLOT = 1.85
-const BAR_START = 180
-const BAR_END = 900
-const IMAGE_REVEAL_PROGRESS = 0.8
-const IMAGE_START =
-  BAR_START + (BAR_END - BAR_START) * (1 - Math.cbrt(1 - IMAGE_REVEAL_PROGRESS))
-const FILL_DURATION = 1000
-const FILLED_STREAM_POSITION = 6
-const STEADY_SPEED = 1.25 * (2 / 3)
-const INITIAL_SPEED =
-  (2 * FILLED_STREAM_POSITION) / (FILL_DURATION / 1000) - STEADY_SPEED
-const DECELERATION = (STEADY_SPEED - INITIAL_SPEED) / (FILL_DURATION / 1000)
-const MAX_VISIBLE_SLOT = 5.25
-
-/** 中心开口（＝中心最小卡片）尺寸：按视口高度给出，保证与卡片尺寸联动 */
-const APERTURE_HEIGHT_VH = 26
-const APERTURE_WIDTH_VH = APERTURE_HEIGHT_VH * 0.75
-
-const FALLBACK_COLORS = [
-  '#ef5d45',
-  '#5977d9',
-  '#f2c84b',
-  '#f08bae',
-  '#8b55b5',
-  '#f06d35',
-  '#57ad82',
-]
 
 const clamp = (value: number, min = 0, max = 1) =>
   Math.min(Math.max(value, min), max)
@@ -101,17 +65,57 @@ function interpolateSlot(values: number[], slot: number) {
   )
 }
 
-function getStreamPosition(elapsed: number) {
-  const motionElapsed = Math.max(elapsed - IMAGE_START, 0) / 1000
-  const fillSeconds = FILL_DURATION / 1000
-  if (motionElapsed <= fillSeconds) {
-    return (
-      INITIAL_SPEED * motionElapsed +
-      0.5 * DECELERATION * motionElapsed * motionElapsed
-    )
-  }
-  return FILLED_STREAM_POSITION + (motionElapsed - fillSeconds) * STEADY_SPEED
+// ───────────────────────── 桌面（扇形）参数 ─────────────────────────
+// 说明：越靠中心（slot 0）越大、旋转越大；向外渐小、渐隐。
+const FAN = {
+  OUTER_SCALE_RATIO: 0.15, // 最内侧卡片宽度 ≈ 0.15 × 视口宽度
+  VISIBLE_SLOTS: 6.5,
+  GAP_HALF_RATIO: 0.11, // 中心留白半宽 = 0.11 × 视口宽
+  SPREAD_RATIO: 0.27, // 单簇铺开宽度 = 0.27 × 视口宽
+  BIRTH_SLOTS: 0.6, // 卡片在开口边缘淡入生长消耗的 slot
+  SCALE: [1.0, 0.95, 0.88, 0.8, 0.71, 0.62, 0.53, 0.45],
+  ROTATION: [34, 31, 28, 24, 20, 16, 13, 11],
+  OPACITY: [1, 1, 0.94, 0.84, 0.72, 0.55, 0.4, 0.26],
 }
+
+// ───────────────────────── 移动端（走廊）参数（沿用此前逻辑） ─────────────────────────
+const CORRIDOR = {
+  OUTER_SCALE_RATIO: 0.333,
+  VISIBLE_SLOTS: 5.25,
+  SLOT_TRAVEL: [0, 0.06, 0.145, 0.255, 0.375, 0.485, 0.585],
+  SLOT_SCALE_RATIO: [0.5, 0.58, 0.66, 0.76, 0.86, 0.95, 1.02],
+  SLOT_ROTATION: [10, 13, 17, 21, 25, 29, 33],
+  TRACK_SPACING: 0.9,
+  BIRTH_GROWTH_SLOTS: 1,
+  PRE_PUSH_START_SLOT: 0.55,
+  PRE_PUSH_END_SLOT: 1.85,
+  APERTURE_HEIGHT_VH: 26,
+  APERTURE_WIDTH_VH: 26 * 0.75,
+}
+
+const FALLBACK_COLORS = [
+  '#ef5d45',
+  '#5977d9',
+  '#f2c84b',
+  '#f08bae',
+  '#8b55b5',
+  '#f06d35',
+  '#57ad82',
+]
+
+const IMAGE_REVEAL_PROGRESS = 0.8
+const BAR_START = 180
+const BAR_END = 900
+const IMAGE_START =
+  BAR_START + (BAR_END - BAR_START) * (1 - Math.cbrt(1 - IMAGE_REVEAL_PROGRESS))
+const FILL_DURATION = 1000
+const FILLED_STREAM_POSITION = 6
+const STEADY_SPEED = 1.25 * (2 / 3)
+const INITIAL_SPEED =
+  (2 * FILLED_STREAM_POSITION) / (FILL_DURATION / 1000) - STEADY_SPEED
+const DECELERATION = (STEADY_SPEED - INITIAL_SPEED) / (FILL_DURATION / 1000)
+
+const clampSlot = (slot: number, max: number) => clamp(slot, 0, max)
 
 /** 解析 #RRGGBB / #RGB，返回 0~1 亮度；解析失败返回 0（按深色处理） */
 const luminanceOf = (color: string) => {
@@ -128,6 +132,18 @@ const luminanceOf = (color: string) => {
   const g = parseInt(full.slice(2, 4), 16) / 255
   const b = parseInt(full.slice(4, 6), 16) / 255
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+function getStreamPosition(elapsed: number) {
+  const motionElapsed = Math.max(elapsed - IMAGE_START, 0) / 1000
+  const fillSeconds = FILL_DURATION / 1000
+  if (motionElapsed <= fillSeconds) {
+    return (
+      INITIAL_SPEED * motionElapsed +
+      0.5 * DECELERATION * motionElapsed * motionElapsed
+    )
+  }
+  return FILLED_STREAM_POSITION + (motionElapsed - fillSeconds) * STEADY_SPEED
 }
 
 const ImageCorridorBanner = ({
@@ -152,6 +168,9 @@ const ImageCorridorBanner = ({
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
+
+  const isDesktop = pairCount > 20
+  const P = isDesktop ? FAN : CORRIDOR
 
   // 每张卡片使用的图片 / 兜底色
   const cardSources = useMemo(() => {
@@ -181,7 +200,6 @@ const ImageCorridorBanner = ({
 
     const render = (now: number) => {
       if (!running) return
-      // 页面切到后台时跳过样式更新，避免无谓绘制
       if (document.hidden) {
         frame = requestAnimationFrame(render)
         return
@@ -194,12 +212,8 @@ const ImageCorridorBanner = ({
       const firstCard = cardRefs.current[0]
       const baseCardWidth = firstCard?.offsetWidth || width * 0.125
       const logicalCardHeight = baseCardWidth * 0.75
-      const outerScale = (window.innerWidth * OUTER_SCALE_RATIO) / baseCardWidth
-      const apertureHeight = apertureRef.current?.offsetHeight || 80
-      const centerScaleRatio = apertureHeight / (logicalCardHeight * outerScale)
-      const scaleRatios = [centerScaleRatio, ...SLOT_SCALE_RATIO.slice(1)]
-      const prePushDistance = baseCardWidth * centerScaleRatio * outerScale
-
+      const outerScale = (window.innerWidth * P.OUTER_SCALE_RATIO) / baseCardWidth
+      const maxVisible = P.VISIBLE_SLOTS
       const streamPosition = getStreamPosition(elapsed)
       const imagesStarted = elapsed >= IMAGE_START
       const barProgress = easeOut((elapsed - BAR_START) / (BAR_END - BAR_START))
@@ -208,6 +222,13 @@ const ImageCorridorBanner = ({
       if (aperture) {
         aperture.style.setProperty('--open', barProgress.toFixed(4))
         aperture.style.opacity = '1'
+        if (isDesktop) {
+          // 桌面：开口尺寸跟随最内侧卡片，形成干净的留白
+          const innerW = baseCardWidth * outerScale * FAN.SCALE[1]
+          const innerH = innerW * (firstCard?.dataset.ratio ? Number(firstCard.dataset.ratio) : 0.75)
+          aperture.style.width = `${innerW * 1.5}px`
+          aperture.style.height = `${innerH * 1.5}px`
+        }
       }
 
       for (let pairIndex = 0; pairIndex < pairCount; pairIndex += 1) {
@@ -215,22 +236,48 @@ const ImageCorridorBanner = ({
         const streamAge =
           rawStreamAge >= 0 ? rawStreamAge % pairCount : rawStreamAge
 
-        const prePushProgress = easeIntoLinearMotion(
-          (streamAge - PRE_PUSH_START_SLOT) /
-            (PRE_PUSH_END_SLOT - PRE_PUSH_START_SLOT),
-        )
-        const birthProgress = easeInOut(streamAge / BIRTH_GROWTH_SLOTS)
-        const slot = Math.max(streamAge - PRE_PUSH_END_SLOT, 0)
-        const birthScale = 0.2 + birthProgress * 0.8
-        const scale = interpolateSlot(scaleRatios, slot) * outerScale
-        const rotationSlot =
-          clamp(slot / MAX_VISIBLE_SLOT) * (SLOT_ROTATION.length - 1)
-        const rotation = interpolateSlot(SLOT_ROTATION, rotationSlot)
-        const x =
-          prePushDistance * prePushProgress +
-          interpolateSlot(SLOT_TRAVEL, slot) * width * TRACK_SPACING
+        let x: number
+        let scale: number
+        let rotation: number
+        let birth: number
+        let opacityFactor: number
+
+        if (isDesktop) {
+          const slot = streamAge
+          const slotFraction = clampSlot(slot, maxVisible) / maxVisible
+          birth = easeInOut(clamp(streamAge / FAN.BIRTH_SLOTS))
+          const s = clampSlot(slot, FAN.SCALE.length - 1)
+          scale = interpolateSlot(FAN.SCALE, s) * outerScale * (0.2 + 0.8 * birth)
+          rotation = interpolateSlot(FAN.ROTATION, s)
+          opacityFactor = interpolateSlot(FAN.OPACITY, s)
+          // 卡片在「留白边缘」淡入生长，随后持续向两侧铺开、缩小、渐隐（保持流动动效）
+          x = FAN.GAP_HALF_RATIO * width + slotFraction * FAN.SPREAD_RATIO * width
+        } else {
+          const prePushProgress = easeIntoLinearMotion(
+            (streamAge - CORRIDOR.PRE_PUSH_START_SLOT) /
+              (CORRIDOR.PRE_PUSH_END_SLOT - CORRIDOR.PRE_PUSH_START_SLOT),
+          )
+          const birthProgress = easeInOut(streamAge / CORRIDOR.BIRTH_GROWTH_SLOTS)
+          const slot = Math.max(streamAge - CORRIDOR.PRE_PUSH_END_SLOT, 0)
+          const apertureHeight = apertureRef.current?.offsetHeight || 80
+          const centerScaleRatio = apertureHeight / (logicalCardHeight * outerScale)
+          const scaleRatios = [centerScaleRatio, ...CORRIDOR.SLOT_SCALE_RATIO.slice(1)]
+          const prePushDistance = baseCardWidth * centerScaleRatio * outerScale
+          birth = 0.2 + birthProgress * 0.8
+          scale = interpolateSlot(scaleRatios, slot) * outerScale
+          rotation =
+            interpolateSlot(
+              CORRIDOR.SLOT_ROTATION,
+              clamp(slot / maxVisible) * (CORRIDOR.SLOT_ROTATION.length - 1),
+            )
+          opacityFactor = 1
+          x =
+            prePushDistance * prePushProgress +
+            interpolateSlot(CORRIDOR.SLOT_TRAVEL, slot) * width * CORRIDOR.TRACK_SPACING
+        }
+
         const visible =
-          imagesStarted && streamAge >= 0 && slot <= MAX_VISIBLE_SLOT ? 1 : 0
+          imagesStarted && streamAge >= 0 && streamAge <= maxVisible ? 1 : 0
 
         for (let sideIndex = 0; sideIndex < 2; sideIndex += 1) {
           const card = cardRefs.current[pairIndex * 2 + sideIndex]
@@ -239,9 +286,11 @@ const ImageCorridorBanner = ({
           card.style.setProperty('--x', `${direction * x}px`)
           card.style.setProperty('--scale', scale.toFixed(4))
           card.style.setProperty('--rotate', `${direction * -rotation}deg`)
-          card.style.setProperty('--birth', birthScale.toFixed(4))
-          card.style.opacity = visible.toFixed(4)
-          card.style.zIndex = String(20 + Math.round(clamp(slot, 0, 8) * 10))
+          card.style.setProperty('--birth', birth.toFixed(4))
+          card.style.opacity = (visible * opacityFactor * birth).toFixed(4)
+          card.style.zIndex = String(
+            20 + Math.round((maxVisible - clampSlot(streamAge, maxVisible)) * 10),
+          )
         }
       }
 
@@ -253,7 +302,7 @@ const ImageCorridorBanner = ({
       running = false
       cancelAnimationFrame(frame)
     }
-  }, [pairCount])
+  }, [pairCount, isDesktop])
 
   // ---- 文案样式（沿用后台设置，移动端按比例缩小）----
   const bannerFontSize = parseInt(hero.bannerTextSize) || 18
@@ -299,10 +348,10 @@ const ImageCorridorBanner = ({
         }}
       />
 
-      {/* ── 图片走廊 ── */}
+      {/* ── 图片走廊 / 扇形 ── */}
       <div
         ref={corridorRef}
-        className="absolute left-0 w-full z-10 pointer-events-none top-[42%] md:top-[46%] h-[56%]"
+        className="absolute left-0 w-full z-10 pointer-events-none top-[42%] md:top-[31%] h-[56%]"
         style={{
           perspective: '850px',
           perspectiveOrigin: '50% 50%',
@@ -316,8 +365,8 @@ const ImageCorridorBanner = ({
           style={
             {
               '--open': 0,
-              width: `${APERTURE_WIDTH_VH}vh`,
-              height: `${APERTURE_HEIGHT_VH}vh`,
+              width: `${CORRIDOR.APERTURE_WIDTH_VH}vh`,
+              height: `${CORRIDOR.APERTURE_HEIGHT_VH}vh`,
               borderRadius: `${corridorRadius}px`,
               background: corridorBg,
               transform: 'translate(-50%, -50%) scaleX(var(--open))',
@@ -356,6 +405,14 @@ const ImageCorridorBanner = ({
                   willChange: 'transform, opacity',
                 } as React.CSSProperties
               }
+              onLoadCapture={(e) => {
+                const el = cardRefs.current[index]
+                if (el) {
+                  const ratio = el.offsetWidth / Math.max(el.offsetHeight, 1)
+                  el.dataset.ratio = String(ratio)
+                }
+                void e
+              }}
             >
               {source.src && (
                 <SmartImage
@@ -369,7 +426,10 @@ const ImageCorridorBanner = ({
                     const h = img.naturalHeight
                     if (w && h) {
                       const el = cardRefs.current[index]
-                      if (el) el.style.aspectRatio = `${w} / ${h}`
+                      if (el) {
+                        el.style.aspectRatio = `${w} / ${h}`
+                        el.dataset.ratio = String(w / h)
+                      }
                     }
                   }}
                 />
