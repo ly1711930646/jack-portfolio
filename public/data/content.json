@@ -54,6 +54,7 @@
     "corridorRadius": "10"
   },
   "marquee": {
+    "enabled": false,
     "row1": [
       "/jack-portfolio/assets/uploads/1785562647395-v3ci8e.webp",
       "/jack-portfolio/assets/uploads/1785573906587-ft1hfn.webp",
