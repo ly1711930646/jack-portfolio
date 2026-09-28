@@ -68,12 +68,12 @@ function interpolateSlot(values: number[], slot: number) {
 // ───────────────────────── 桌面（扇形）参数 ─────────────────────────
 // 说明：越靠中心（slot 0）越大、旋转越大；向外渐小、渐隐。
 const FAN = {
-  OUTER_SCALE_RATIO: 0.15, // 最内侧卡片宽度 ≈ 0.15 × 视口宽度
+  OUTER_SCALE_RATIO: 0.22, // 最内侧卡片宽度 ≈ 0.22 × 视口宽度
   VISIBLE_SLOTS: 6.5,
-  GAP_HALF_RATIO: 0.11, // 中心留白半宽 = 0.11 × 视口宽
+  GAP_HALF_RATIO: 0.035, // 中心留白半宽 = 0.035 × 视口宽
   SPREAD_RATIO: 0.27, // 单簇铺开宽度 = 0.27 × 视口宽
-  BIRTH_SLOTS: 0.6, // 卡片在开口边缘淡入生长消耗的 slot
-  SCALE: [1.0, 0.95, 0.88, 0.8, 0.71, 0.62, 0.53, 0.45],
+  BIRTH_SLOTS: 0.35, // 卡片在开口边缘淡入生长消耗的 slot
+  SCALE: [1.0, 0.98, 0.92, 0.84, 0.74, 0.63, 0.52, 0.42],
   ROTATION: [34, 31, 28, 24, 20, 16, 13, 11],
   OPACITY: [1, 1, 0.94, 0.84, 0.72, 0.55, 0.4, 0.26],
 }
@@ -351,7 +351,7 @@ const ImageCorridorBanner = ({
       {/* ── 图片走廊 / 扇形 ── */}
       <div
         ref={corridorRef}
-        className="absolute left-0 w-full z-10 pointer-events-none top-[42%] md:top-[31%] h-[56%]"
+        className="absolute left-0 w-full z-10 pointer-events-none top-[42%] md:top-[36%] h-[56%]"
         style={{
           perspective: '850px',
           perspectiveOrigin: '50% 50%',
