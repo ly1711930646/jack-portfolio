@@ -48,6 +48,7 @@
     "bannerButtonTextColor": "#000000",
     "bannerButtonFontSize": "14",
     "bannerButtonFontWeight": "500",
+    "bannerButtonEnabled": false,
     "bannerStyle": "corridor",
     "corridorImages": [],
     "corridorBg": "#ffffff",
