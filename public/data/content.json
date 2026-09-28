@@ -53,7 +53,7 @@
     "corridorImages": [],
     "corridorBg": "#ffffff",
     "corridorRadius": "10",
-    "corridorSpeed": "1"
+    "corridorSpeed": "0.60"
   },
   "marquee": {
     "enabled": false,
