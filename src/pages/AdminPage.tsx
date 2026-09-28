@@ -974,6 +974,33 @@ const MarqueeEditor = ({ marquee, onChange }: { marquee: MarqueeContent; onChang
 
   return (
     <div className="space-y-6">
+      <Card title="轮播栏展示">
+        <div className="flex items-start justify-between gap-5">
+          <div>
+            <p className="text-sm text-[#D7E2EA]">在前端展示轮播栏</p>
+            <p className="mt-1.5 text-xs text-white/40 leading-relaxed">
+              关闭后首页的图片轮播整块隐藏（下面的图片配置会保留，随时可以再打开）。
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={marquee.enabled !== false}
+            aria-label="在前端展示轮播栏"
+            onClick={() => onChange({ ...marquee, enabled: marquee.enabled === false })}
+            className={`relative shrink-0 w-14 h-8 rounded-full transition-colors duration-200 cursor-pointer ${
+              marquee.enabled !== false ? 'bg-[#4A90FF]' : 'bg-white/15'
+            }`}
+          >
+            <span
+              className={`absolute top-1 left-0 w-6 h-6 rounded-full bg-white shadow transition-transform duration-200 ${
+                marquee.enabled !== false ? 'translate-x-7' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+      </Card>
+
       <Card title="Row 1（向右滚动）">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {marquee.row1.map((src, i) => (

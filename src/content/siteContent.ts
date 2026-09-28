@@ -122,6 +122,8 @@ export interface ProjectsContent {
 }
 
 export interface MarqueeContent {
+  /** 是否在前端展示轮播栏；缺省视为 true */
+  enabled?: boolean
   row1: string[]
   row2: string[]
 }
@@ -182,6 +184,7 @@ export const defaultContent: SiteContent = {
     corridorRadius: '10',
   },
   marquee: {
+    enabled: true,
     row1: [
       'https://motionsites.ai/assets/hero-space-voyage-preview-eECLH3Yc.gif',
       'https://motionsites.ai/assets/hero-codenest-preview-Cgppc2qV.gif',

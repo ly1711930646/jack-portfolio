@@ -96,6 +96,9 @@ const MarqueeSection = () => {
   const { content } = useContent()
   const { marquee } = content
 
+  // 后台开关：关闭时整块轮播栏不在前端展示（缺省视为开启，兼容旧数据）
+  if (marquee.enabled === false) return null
+
   return (
     <section className="bg-[#0C0C0C] pt-24 sm:pt-32 md:pt-40 pb-10 overflow-hidden">
       <div className="flex flex-col gap-3">
