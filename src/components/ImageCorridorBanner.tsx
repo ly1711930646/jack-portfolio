@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { HeroContent } from '../content/siteContent'
 import { SmartImage } from './SmartImage'
 
@@ -386,6 +386,55 @@ const ImageCorridorBanner = ({
   const titleFontPxMobile = Math.max(22, Math.round(titleFontPx * 0.42))
   const bannerFontWeight = parseInt(hero.bannerTextWeight) || 700
 
+  // 主标题按后台 textarea 里的换行符分行（React 默认会把 \n 折叠成空格，
+  // 导致只能靠容器宽度自动折行 —— 字数一多就散成 4 行）。
+  const titleLines = useMemo(
+    () =>
+      (hero.bannerText || '')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean),
+    [hero.bannerText],
+  )
+
+  // 桌面端每行都不折行（硬性只显示后台指定的行数），
+  // 于是需要把字号自动收缩到「最长的一行刚好放得下」，避免溢出被裁掉。
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const titleLineRefs = useRef<(HTMLSpanElement | null)[]>([])
+
+  const fitTitle = useCallback(() => {
+    const el = titleRef.current
+    if (!el) return
+    const maxWidth = el.clientWidth
+    if (!maxWidth) return
+    // 先在「不缩放」状态下量出每行的自然宽度（缩放与字号成线性，量一次即可）
+    el.style.setProperty('--title-fit', '1')
+    const widest = titleLineRefs.current.reduce(
+      (max, span) => (span ? Math.max(max, span.getBoundingClientRect().width) : max),
+      0,
+    )
+    // 留 0.5% 余量，避免亚像素取整后仍溢出；缩得再小也不低于 0.3 倍（保可读性）
+    const next = widest > maxWidth ? Math.max(0.3, (maxWidth * 0.995) / widest) : 1
+    el.style.setProperty('--title-fit', String(next))
+  }, [])
+
+  useLayoutEffect(() => {
+    let alive = true
+    fitTitle()
+    const onResize = () => fitTitle()
+    window.addEventListener('resize', onResize)
+    // 字体（Inter webfont）加载完成后行宽会变，需要重算一次
+    document.fonts?.ready
+      ?.then(() => {
+        if (alive) fitTitle()
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+      window.removeEventListener('resize', onResize)
+    }
+  }, [fitTitle, titleLines, titleFontPx])
+
   const subtitleFontSize = parseInt(hero.bannerSubtitleSize) || 18
   const subtitleFontPxTablet = Math.max(14, Math.round(subtitleFontSize * 0.9))
   const subtitleFontPxMobile = Math.max(12, Math.round(subtitleFontSize * 0.75))
@@ -526,17 +575,20 @@ const ImageCorridorBanner = ({
         <div
           className="absolute left-1/2 -translate-x-1/2 z-30 flex flex-col items-center text-center gap-4 sm:gap-5 px-6 top-[9%] sm:top-[10%]"
           style={{
-            width: 'min(920px, 92vw)',
+            // 放宽文案容器：两行展示时长句需要更多横向空间，这样字号才用得上后台设定值
+            width: 'min(1240px, 94vw)',
             transform: `translate(-50%, ${contentOffsetY}px)`,
           }}
         >
           {hero.bannerText && (
             <h1
+              ref={titleRef}
               className="w-full text-[length:var(--title-mobile)] sm:text-[length:var(--title-tablet)] md:text-[length:var(--title-desktop)]"
               style={
                 {
                   fontFamily: 'Inter, "PingFang SC", "Microsoft YaHei", sans-serif',
-                  '--title-desktop': `min(${titleFontPx}px, 5.6vw)`,
+                  // 桌面端字号 = min(后台值, 视口上限) × 自适应系数（保证最长行不溢出）
+                  '--title-desktop': `calc(min(${titleFontPx}px, 5.6vw) * var(--title-fit, 1))`,
                   '--title-tablet': `min(${titleFontPxTablet}px, 7.2vw)`,
                   '--title-mobile': `min(${titleFontPxMobile}px, 9.5vw)`,
                   fontWeight: bannerFontWeight,
@@ -546,7 +598,25 @@ const ImageCorridorBanner = ({
                 } as React.CSSProperties
               }
             >
-              {hero.bannerText}
+              {titleLines.map((line, index) => (
+                <Fragment key={`${index}-${line}`}>
+                  {index > 0 && <br />}
+                  <span
+                    ref={(node) => {
+                      titleLineRefs.current[index] = node
+                    }}
+                    // 桌面端整行不折行（严格按后台换行分行）；移动端允许折行，避免字号被压得太小。
+                    // 单行文案（后台没写换行）时保持原有自动折行行为，不做强制
+                    className={
+                      titleLines.length > 1
+                        ? 'whitespace-normal md:whitespace-nowrap'
+                        : 'whitespace-normal'
+                    }
+                  >
+                    {line}
+                  </span>
+                </Fragment>
+              ))}
             </h1>
           )}
 

@@ -974,7 +974,13 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
 
       {/* ===== Banner 文案 ===== */}
       <Card title="Banner 文案">
-        <p className="text-xs text-white/40 mb-3">主标题（对应截图中的大标题）</p>
+        <p className="text-xs text-white/40 mb-3">
+          主标题（对应截图中的大标题）
+          <span className="text-white/30">
+            {' '}
+            —— 用回车换行，首页会严格按此分行显示（如两行文案就写成两行，字号超出宽度会自动收缩）
+          </span>
+        </p>
         <textarea
           placeholder="输入 Banner 主标题"
           value={hero.bannerText}
