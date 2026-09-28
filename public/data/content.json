@@ -53,7 +53,8 @@
     "corridorImages": [],
     "corridorBg": "#F1F0EC",
     "corridorRadius": "10",
-    "corridorSpeed": "0.60"
+    "corridorSpeed": "0.60",
+    "heroDotGridEnabled": true
   },
   "marquee": {
     "enabled": false,

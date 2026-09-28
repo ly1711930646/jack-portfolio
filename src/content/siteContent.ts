@@ -44,6 +44,8 @@ export interface HeroContent {
     corridorRadius: string
     /** 图片走廊的流动速度倍率（1 = 原始速度，越大越快） */
     corridorSpeed: string
+    /** 走廊背景是否叠加网格点状底纹；缺省视为 true */
+    heroDotGridEnabled?: boolean
   }
 
 export interface DecorativeImages {
@@ -188,6 +190,7 @@ export const defaultContent: SiteContent = {
     corridorBg: '#0C0C0C',
     corridorRadius: '10',
     corridorSpeed: '1',
+    heroDotGridEnabled: true,
   },
   marquee: {
     enabled: true,

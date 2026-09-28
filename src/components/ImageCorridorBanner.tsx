@@ -133,8 +133,8 @@ const clampSlot = (slot: number, max: number) => clamp(slot, 0, max)
 /** 首帧（还没有上一帧时间戳时）使用的参考帧间隔 */
 const REFERENCE_FRAME_MS = 1000 / 60
 
-/** 解析 #RRGGBB / #RGB，返回 0~1 亮度；解析失败返回 0（按深色处理） */
-const luminanceOf = (color: string) => {
+/** 解析 #RRGGBB / #RGB，返回 RGB 三元组；解析失败返回 null */
+const parseHexRgb = (color: string): [number, number, number] | null => {
   const hex = (color || '').trim().replace('#', '')
   const full =
     hex.length === 3
@@ -143,11 +143,26 @@ const luminanceOf = (color: string) => {
           .map((c) => c + c)
           .join('')
       : hex
-  if (!/^[0-9a-fA-F]{6}$/.test(full)) return 0
-  const r = parseInt(full.slice(0, 2), 16) / 255
-  const g = parseInt(full.slice(2, 4), 16) / 255
-  const b = parseInt(full.slice(4, 6), 16) / 255
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return null
+  return [
+    parseInt(full.slice(0, 2), 16),
+    parseInt(full.slice(2, 4), 16),
+    parseInt(full.slice(4, 6), 16),
+  ]
+}
+
+/** 解析 #RRGGBB / #RGB，返回 0~1 亮度；解析失败返回 0（按深色处理） */
+const luminanceOf = (color: string) => {
+  const rgb = parseHexRgb(color)
+  if (!rgb) return 0
+  const [r, g, b] = rgb.map((value) => value / 255) as [number, number, number]
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+/** 给 #RRGGBB 套上 alpha；解析失败时退回 fallback */
+const withAlpha = (color: string, alpha: number, fallback: string) => {
+  const rgb = parseHexRgb(color)
+  return rgb ? `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})` : fallback
 }
 
 /**
@@ -455,12 +470,43 @@ const ImageCorridorBanner = ({
     ? 'rgba(255,255,255,0.46)'
     : 'rgba(255,255,255,0.10)'
 
+  // ── 背景点阵（网格点状底纹）──
+  // 浅底用深点、深底用浅点；中心再用同底色的径向渐变把点纹晕开，
+  // 让标题区干净、四周（尤其是图片带所在的上下边缘）保留点纹。
+  const dotGridEnabled = hero.heroDotGridEnabled !== false
+  const dotColor = isLightBg
+    ? 'rgba(23, 23, 19, 0.14)'
+    : 'rgba(255, 255, 255, 0.13)'
+  const dotFadeCenter = isLightBg
+    ? 'rgba(255, 255, 255, 0.92)'
+    : withAlpha(corridorBg, 0.96, 'rgba(12, 12, 12, 0.96)')
+  const dotFadeEdge = isLightBg
+    ? 'rgba(255, 255, 255, 0)'
+    : withAlpha(corridorBg, 0, 'rgba(12, 12, 12, 0)')
+
   return (
     <section
       id="hero"
-      className="relative h-screen flex flex-col overflow-hidden"
-      style={{ backgroundColor: corridorBg }}
+      className={`relative h-screen flex flex-col overflow-hidden${
+        dotGridEnabled ? ' hero-dot-grid' : ''
+      }`}
+      style={
+        {
+          backgroundColor: corridorBg,
+          '--dot-color': dotColor,
+        } as React.CSSProperties
+      }
     >
+      {/* 点阵中心淡出（压在背景之上、图片带之下） */}
+      {dotGridEnabled && (
+        <div
+          className="absolute inset-0 z-[1] pointer-events-none"
+          style={{
+            background: `radial-gradient(circle at 50% 45%, ${dotFadeCenter} 0%, ${dotFadeEdge} 48%)`,
+          }}
+        />
+      )}
+
       {/* 中心柔光，让开口处有呼吸感 */}
       <div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none z-[9]"

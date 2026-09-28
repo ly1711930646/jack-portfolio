@@ -566,3 +566,23 @@ body.modal-open nav.nav-glass {
     opacity: 0.5;
   }
 }
+
+/* ── Banner 背景：网格点状底纹 ──
+   网格点用 radial-gradient + background-size 平铺而成（比图片/SVG 更轻，无额外请求）。
+   点的颜色由 --dot-color 决定（浅底用深点、深底用浅点，由组件按背景色明暗计算），
+   面板的卡片一律压在点阵之上，所以点纹只出现在背景上。 */
+.hero-dot-grid {
+  background-image: radial-gradient(
+    circle,
+    var(--dot-color, rgba(23, 23, 19, 0.14)) 1.2px,
+    transparent 1.35px
+  );
+  background-size: 20px 20px;
+}
+
+/* 小屏缩小网格间距，让点阵密度观感与桌面一致 */
+@media (max-width: 760px) {
+  .hero-dot-grid {
+    background-size: 16px 16px;
+  }
+}

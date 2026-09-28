@@ -798,6 +798,30 @@ const BannerEditor = ({ hero, onChange }: { hero: HeroContent; onChange: (v: Her
                 className="w-20 bg-[#161616] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#4A90FF]"
               />
             </div>
+            <div className="flex items-center gap-3">
+              <label className="text-xs text-white/50 whitespace-nowrap">背景点阵</label>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={hero.heroDotGridEnabled !== false}
+                aria-label="在走廊背景上显示网格点状底纹"
+                onClick={() =>
+                  onChange({ ...hero, heroDotGridEnabled: hero.heroDotGridEnabled === false })
+                }
+                className={`relative shrink-0 w-12 h-7 rounded-full transition-colors duration-200 cursor-pointer ${
+                  hero.heroDotGridEnabled !== false ? 'bg-[#4A90FF]' : 'bg-white/15'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 left-0 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                    hero.heroDotGridEnabled !== false ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className="text-[11px] text-white/35">
+                {hero.heroDotGridEnabled !== false ? '已开启' : '已关闭'}
+              </span>
+            </div>
           </div>
 
           {/* 动画速度：左右拖动控制图片流动快慢 */}
