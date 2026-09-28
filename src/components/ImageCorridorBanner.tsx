@@ -444,7 +444,14 @@ const ImageCorridorBanner = ({
               ref={(el) => {
                 cardRefs.current[index] = el
               }}
-              className="absolute top-1/2 left-1/2 overflow-hidden w-[clamp(116px,36vw,240px)] sm:w-[clamp(150px,17vw,240px)] md:w-[clamp(180px,12.5vw,240px)]"
+              // 布局宽度必须 ≥「该模式下卡片被放大后的最大显示宽度」，否则 <img> 会按
+              // 较小的布局尺寸解码/栅格化，再被合成器拉伸 → 图糊成马赛克。
+              // 放大由 transform: scale(var(--scale)) 完成，而 --scale 已乘上
+              // outerScale = maxCardWidth / baseCardWidth，所以这里放大布局盒不会改变
+              // 任何可见几何（位移/尺寸都与 outerScale 相互抵消），只是让栅格化分辨率够用。
+              // 移动端走廊：最大显示宽 = 开口高 / 0.75 = 34.67vh（另一项 1.02×0.333vw = 34vw）
+              // 桌面单向带：最大显示宽 = min(0.33vw, 0.52vh)
+              className="absolute top-1/2 left-1/2 overflow-hidden w-[max(40vh,38vw)] md:w-[min(39vw,60vh)]"
               style={
                 {
                   '--x': '0px',
