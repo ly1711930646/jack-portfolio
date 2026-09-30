@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { ProjectItem } from '../content/siteContent'
 import { SmartImage } from './SmartImage'
-import { isZoomableCategory } from '../utils/projectCategory'
+import { defaultZoomFor, isZoomableCategory } from '../utils/projectCategory'
 
 interface ProjectModalProps {
   project: ProjectItem
@@ -33,7 +33,9 @@ const ZoomOutIcon = () => (
 const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [zoom, setZoom] = useState(0.3) // 图片缩放类目（国内电商 / 跨境电商）默认 30% 预览
+  // 图片缩放类目（国内电商 / 跨境电商）的默认缩放：跨境电商 100%、国内电商 30%。
+  // 用惰性初始化取到正确值，避免首帧先渲染 30% 再跳到目标比例（父组件以 project.number 为 key 重新挂载）。
+  const [zoom, setZoom] = useState(() => defaultZoomFor(project))
   const [imgHeights, setImgHeights] = useState<number[]>([]) // 每张图 onLoad 时的 clientHeight（未 scale）
   const [shakeTick, setShakeTick] = useState(0) // 窗口抖动计数
   const onCloseRef = useRef(onClose) // 父组件频繁重渲染会创建新的 onClose，用 ref 保持引用稳定
@@ -98,7 +100,7 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
     prevProjectRef.current = project
     if (isNewProject) {
       setCurrentIndex(0)
-      setZoom(0.3)
+      setZoom(defaultZoomFor(project))
       setImgHeights([])
       setShakeTick(0)
     }
