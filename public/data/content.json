@@ -408,7 +408,7 @@
         ]
       },
       {
-        "number": "3-1",
+        "number": "3-",
         "name": "品牌设计  —  企业工业宣传册 ",
         "category": "画册设计",
         "tags": [
@@ -491,7 +491,7 @@
         ]
       },
       {
-        "number": "3-2",
+        "number": "3-1",
         "name": "品牌提案  —  喂来咖啡",
         "category": "品牌设计",
         "tags": [
@@ -584,6 +584,45 @@
           "/jack-portfolio/assets/uploads/1790756871533-59uvtp.jpg",
           "/jack-portfolio/assets/uploads/1790756874470-ybeu4k.jpg",
           "/jack-portfolio/assets/uploads/1790756878188-e84sp9.jpg"
+        ]
+      },
+      {
+        "number": "3-2",
+        "name": "品牌提案  —  Meowloy宠物VI",
+        "category": "品牌设计",
+        "tags": [
+          "品牌设计"
+        ],
+        "coverImg": "/jack-portfolio/assets/uploads/1790867908039-4cnlba.jpg",
+        "images": [
+          "/jack-portfolio/assets/uploads/1790867929019-7suapz.jpg",
+          "/jack-portfolio/assets/uploads/1790867932374-q4vehh.jpg",
+          "/jack-portfolio/assets/uploads/1790867935657-jkz5cz.jpg",
+          "/jack-portfolio/assets/uploads/1790867938179-zar6ch.jpg",
+          "/jack-portfolio/assets/uploads/1790867940424-2374pg.jpg",
+          "/jack-portfolio/assets/uploads/1790867944505-cbxl02.jpg",
+          "/jack-portfolio/assets/uploads/1790867947664-3jgwz8.jpg",
+          "/jack-portfolio/assets/uploads/1790867949391-81qu12.jpg",
+          "/jack-portfolio/assets/uploads/1790867951695-ahgi88.jpg",
+          "/jack-portfolio/assets/uploads/1790867953777-kpusd7.jpg",
+          "/jack-portfolio/assets/uploads/1790867955726-za7unb.jpg",
+          "/jack-portfolio/assets/uploads/1790867958122-1vswmg.jpg",
+          "/jack-portfolio/assets/uploads/1790867959735-k13my6.jpg",
+          "/jack-portfolio/assets/uploads/1790867962150-2jxwd8.jpg",
+          "/jack-portfolio/assets/uploads/1790867965042-64jkyt.jpg",
+          "/jack-portfolio/assets/uploads/1790867967567-ykw4q8.jpg",
+          "/jack-portfolio/assets/uploads/1790867969918-qw9qjq.jpg",
+          "/jack-portfolio/assets/uploads/1790867973321-yrizl4.jpg",
+          "/jack-portfolio/assets/uploads/1790867984593-876tn4.jpg",
+          "/jack-portfolio/assets/uploads/1790867987870-da2735.jpg",
+          "/jack-portfolio/assets/uploads/1790867990830-vcyowo.jpg",
+          "/jack-portfolio/assets/uploads/1790867994389-rwbcxi.jpg",
+          "/jack-portfolio/assets/uploads/1790867997951-99eg04.jpg",
+          "/jack-portfolio/assets/uploads/1790868001852-0v3fda.jpg",
+          "/jack-portfolio/assets/uploads/1790868005175-fojafq.jpg",
+          "/jack-portfolio/assets/uploads/1790868008841-tu6b0s.jpg",
+          "/jack-portfolio/assets/uploads/1790868012649-4nts9e.jpg",
+          "/jack-portfolio/assets/uploads/1790868016085-ne8om6.jpg"
         ]
       }
     ]
