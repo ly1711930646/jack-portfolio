@@ -216,32 +216,6 @@
         ]
       },
       {
-        "number": "1-1",
-        "name": "VPN  —  工具APP",
-        "category": "APP设计",
-        "tags": [
-          "UI设计"
-        ],
-        "coverImg": "/jack-portfolio/assets/uploads/1785749758336-8j2n1o.png",
-        "images": [
-          "/jack-portfolio/assets/uploads/1785433010344-ew7s4s.webp",
-          "/jack-portfolio/assets/uploads/1785433042203-ogjiz4.webp",
-          "/jack-portfolio/assets/uploads/1785433048978-ex3b7y.webp",
-          "/jack-portfolio/assets/uploads/1785433055289-jy5gmu.webp",
-          "/jack-portfolio/assets/uploads/1785433062213-kuwmrd.webp",
-          "/jack-portfolio/assets/uploads/1785433068426-her7hz.webp",
-          "/jack-portfolio/assets/uploads/1785433075036-81dohw.webp",
-          "/jack-portfolio/assets/uploads/1785433080575-hjthy2.webp",
-          "/jack-portfolio/assets/uploads/1785433087619-rr24a0.webp",
-          "/jack-portfolio/assets/uploads/1785433097438-c1nty0.webp",
-          "/jack-portfolio/assets/uploads/1785433105937-fse79t.webp",
-          "/jack-portfolio/assets/uploads/1785433185012-awz4le.webp",
-          "/jack-portfolio/assets/uploads/1785433192117-blx3ph.webp",
-          "/jack-portfolio/assets/uploads/1785433199564-semnm3.webp",
-          "/jack-portfolio/assets/uploads/1785433206956-2etwnl.webp"
-        ]
-      },
-      {
         "number": "1-2",
         "name": "B端  —  医疗后台",
         "category": "B端设计",
