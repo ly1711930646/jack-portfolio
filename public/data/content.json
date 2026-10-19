@@ -667,7 +667,7 @@
         ]
       },
       {
-        "number": "1-5",
+        "number": "1-6",
         "name": "硬件  —  宠物追踪器",
         "category": "UI设计",
         "tags": [
@@ -686,7 +686,8 @@
           "/jack-portfolio/assets/uploads/1792420029144-r63wen.jpg",
           "/jack-portfolio/assets/uploads/1792420032373-dbfn9m.jpg",
           "/jack-portfolio/assets/uploads/1792420035758-07i72d.jpg"
-        ]
+        ],
+        "coverImg": "/jack-portfolio/assets/uploads/1792420160910-bymbgk.jpg"
       }
     ]
   },
