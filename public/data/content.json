@@ -615,6 +615,29 @@
           "/jack-portfolio/assets/uploads/1792420035758-07i72d.jpg"
         ],
         "coverImg": "/jack-portfolio/assets/uploads/1792420160910-bymbgk.jpg"
+      },
+      {
+        "number": "1-7",
+        "name": "硬件  —  智能闹钟",
+        "category": "UI设计",
+        "tags": [
+          "UI设计"
+        ],
+        "coverImg": "/jack-portfolio/assets/uploads/1792516799317-8j2b21.png",
+        "images": [
+          "/jack-portfolio/assets/uploads/1792516835150-307043.png",
+          "/jack-portfolio/assets/uploads/1792516837903-wpiuw4.png",
+          "/jack-portfolio/assets/uploads/1792516842628-zxvu8g.png",
+          "/jack-portfolio/assets/uploads/1792516846684-q486wj.png",
+          "/jack-portfolio/assets/uploads/1792516851228-5g2cza.gif",
+          "/jack-portfolio/assets/uploads/1792516872676-5r2ktp.gif",
+          "/jack-portfolio/assets/uploads/1792516883855-2uqmae.gif",
+          "/jack-portfolio/assets/uploads/1792516912003-527ity.gif",
+          "/jack-portfolio/assets/uploads/1792516917358-92rt3a.png",
+          "/jack-portfolio/assets/uploads/1792516920876-nef3oc.png",
+          "/jack-portfolio/assets/uploads/1792516924390-nju7m2.png",
+          "/jack-portfolio/assets/uploads/1792516927811-hyk0tl.png"
+        ]
       }
     ]
   },
