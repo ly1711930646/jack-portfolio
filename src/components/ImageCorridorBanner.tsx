@@ -186,6 +186,106 @@ function getStreamPosition(motionElapsed: number) {
   return fillIntegral(Math.max(motionElapsed - IMAGE_START, 0) / 1000)
 }
 
+/**
+ * 移动端专用：双排反向无缝轮播
+ * - 上排自右向左（marquee-left），下排自左向右（marquee-right）
+ * - 内容三倍复制，配合 CSS 的 translateX(-33.3333%) 实现首尾无缝
+ * - 滚动速度跟随后台走廊速度倍率（speed），圆角跟随后台设置（radius）
+ * - 容器为装饰背景，pointer-events-none 不拦截页面滚动/点击
+ */
+const MobileDoubleMarquee = ({
+  images,
+  radius,
+  speed,
+}: {
+  images: string[]
+  radius: number
+  speed: number
+}) => {
+  const row1Ref = useRef<HTMLDivElement>(null)
+  const row2Ref = useRef<HTMLDivElement>(null)
+  const [durations, setDurations] = useState<[number, number]>([0, 0])
+
+  // 图片太少时重复到至少 6 张，保证一排宽度足够铺满屏幕并无缝滚动
+  const baseImages = useMemo(() => {
+    const list = images.filter(Boolean)
+    if (list.length === 0) return []
+    const repeated = [...list]
+    while (repeated.length < 6) repeated.push(...list)
+    return repeated
+  }, [images])
+
+  useEffect(() => {
+    const rows = [row1Ref.current, row2Ref.current]
+    const measure = () => {
+      const next = rows.map((el) => {
+        if (!el) return 0
+        // 内容已三倍复制，滚动一套宽度 = scrollWidth / 3
+        const singleSetWidth = el.scrollWidth / 3
+        // 基准线速度 64px/s，再乘后台速度倍率
+        return singleSetWidth > 0 ? singleSetWidth / (64 * speed) : 0
+      }) as [number, number]
+      setDurations(next)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    rows.forEach((el) => el && ro.observe(el))
+    return () => ro.disconnect()
+  }, [baseImages, speed])
+
+  if (baseImages.length === 0) return null
+
+  const renderRow = (
+    ref: React.RefObject<HTMLDivElement>,
+    direction: 'left' | 'right',
+    duration: number,
+    list: string[],
+  ) => {
+    const tripled = [...list, ...list, ...list]
+    return (
+      <div
+        ref={ref}
+        className={`marquee-row flex gap-3 ${
+          direction === 'left' ? 'marquee-left' : 'marquee-right'
+        } ${duration > 0 ? 'marquee-running' : ''}`}
+        style={
+          {
+            ['--marquee-duration' as string]: duration > 0 ? `${duration}s` : '0s',
+            willChange: 'transform',
+          } as React.CSSProperties
+        }
+      >
+        {tripled.map((src, i) => (
+          <SmartImage
+            key={`${src}-${i}`}
+            src={src}
+            alt=""
+            loading="eager"
+            draggable={false}
+            className="flex-shrink-0 object-cover"
+            style={{
+              width: '48vw',
+              height: '36vw',
+              borderRadius: `${radius}px`,
+            }}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="pointer-events-none absolute left-0 z-10 flex w-full flex-col justify-center gap-3 overflow-hidden"
+      style={{ top: '38%', height: '46%' }}
+      aria-hidden="true"
+    >
+      {renderRow(row1Ref, 'left', durations[0], baseImages)}
+      {renderRow(row2Ref, 'right', durations[1], [...baseImages].reverse())}
+    </div>
+  )
+}
+
 const ImageCorridorBanner = ({
   hero,
   images,
@@ -518,7 +618,8 @@ const ImageCorridorBanner = ({
         }}
       />
 
-      {/* ── 图片走廊 / 扇形 ── */}
+      {/* ── 桌面：单向流动带（原样保留）／ 移动：双排反向轮播 ── */}
+      {isDesktop && (
       <div
         ref={corridorRef}
         className="absolute left-0 w-full z-10 pointer-events-none top-[42%] md:top-[35%] h-[56%]"
@@ -615,6 +716,16 @@ const ImageCorridorBanner = ({
           )
         })}
       </div>
+      )}
+
+      {/* 移动端：双排反向无缝轮播（上排左移 / 下排右移） */}
+      {!isDesktop && (
+        <MobileDoubleMarquee
+          images={images}
+          radius={corridorRadius}
+          speed={corridorSpeed}
+        />
+      )}
 
       {/* ── 文案层 ── */}
       {(hero.bannerText || hero.bannerSubtitle) && (
