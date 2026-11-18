@@ -188,7 +188,7 @@
         "col1Img1": "assets/remote/placeholder-deco-tr.svg",
         "col1Img2": "assets/remote/placeholder-deco-bl.svg",
         "col2Img": "assets/remote/placeholder-deco-br.svg",
-        "coverImg": "/jack-portfolio/assets/uploads/1792518254204-p10it6.jpg",
+        "coverImg": "/jack-portfolio/assets/uploads/1792517828690-pyklqu.jpg",
         "tags": [
           "UI设计"
         ],
@@ -637,6 +637,24 @@
           "/jack-portfolio/assets/uploads/1792517495713-q8fnk9.png",
           "/jack-portfolio/assets/uploads/1792517499414-9pxkxg.png",
           "/jack-portfolio/assets/uploads/1792517502806-r9u4wd.png"
+        ]
+      },
+      {
+        "number": "2-5",
+        "name": "USB - 移动闪存",
+        "category": "A+设计",
+        "tags": [
+          "跨境电商"
+        ],
+        "coverImg": "/jack-portfolio/assets/uploads/1794983075468-s3fyy8.png",
+        "images": [
+          "/jack-portfolio/assets/uploads/1794983087406-oukf4j.jpg",
+          "/jack-portfolio/assets/uploads/1794983128654-bktpd0.jpg",
+          "/jack-portfolio/assets/uploads/1794983162513-7oyfdt.jpg",
+          "/jack-portfolio/assets/uploads/1794983227702-kba9vw.jpg",
+          "/jack-portfolio/assets/uploads/1794983243938-iammi9.jpg",
+          "/jack-portfolio/assets/uploads/1794983286947-6704fq.jpg",
+          "/jack-portfolio/assets/uploads/1794983314615-bd6cox.jpg"
         ]
       }
     ]
