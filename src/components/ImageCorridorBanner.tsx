@@ -222,8 +222,8 @@ const MobileDoubleMarquee = ({
         if (!el) return 0
         // 内容已三倍复制，滚动一套宽度 = scrollWidth / 3
         const singleSetWidth = el.scrollWidth / 3
-        // 基准线速度 64px/s，再乘后台速度倍率
-        return singleSetWidth > 0 ? singleSetWidth / (64 * speed) : 0
+        // 基准线速度 100px/s，再乘后台速度倍率
+        return singleSetWidth > 0 ? singleSetWidth / (100 * speed) : 0
       }) as [number, number]
       setDurations(next)
     }
@@ -250,6 +250,9 @@ const MobileDoubleMarquee = ({
         } ${duration > 0 ? 'marquee-running' : ''}`}
         style={
           {
+            // 宽度必须等于内容宽，translateX(-33.3333%) 才能精确移动「一套内容」，
+            // 否则百分比按父容器 390px 算，位移过小导致滚动几乎不动
+            width: 'max-content',
             ['--marquee-duration' as string]: duration > 0 ? `${duration}s` : '0s',
             willChange: 'transform',
           } as React.CSSProperties
@@ -262,11 +265,12 @@ const MobileDoubleMarquee = ({
             alt=""
             loading="eager"
             draggable={false}
-            className="flex-shrink-0 object-cover"
+            className="flex-shrink-0 object-contain"
             style={{
               width: '48vw',
-              height: '36vw',
-              borderRadius: `${radius}px`,
+              height: '31vw',
+              borderRadius: `${Math.round(radius * 0.6)}px`,
+              background: 'rgba(127, 127, 127, 0.06)',
             }}
           />
         ))}
